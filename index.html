@@ -73,7 +73,7 @@ function renderManagementMonthly(){
   const dailyChange=prev&&prev.avg_daily?(r.avg_daily-prev.avg_daily)/prev.avg_daily:null;
   const customerChange=prev&&prev.days&&prev.customers?((perDayCustomers-(prev.customers/prev.days))/(prev.customers/prev.days)):null;
   const spendChange=prev&&prev.avg_spend?(r.avg_spend-prev.avg_spend)/prev.avg_spend:null;
-  const fmt=v=>v===null?'—':\`${v>=0?'+':''}${(v*100).toFixed(1)}%\`;
+  const fmt=v=>v===null?'—':`${v>=0?'+':''}${(v*100).toFixed(1)}%`;
   return [ymLabel(r.month),yen(r.sales),r.days+'日',yen(r.avg_daily),fmt(dailyChange),perDayCustomers.toFixed(1)+'人',fmt(customerChange),yen(r.avg_spend),fmt(spendChange),yen(projection)];
  });
  const latest=state.monthly[state.monthly.length-1],prev=state.monthly[state.monthly.length-2];
@@ -82,9 +82,9 @@ function renderManagementMonthly(){
   const daily=(latest.avg_daily-prev.avg_daily)/prev.avg_daily,spend=(latest.avg_spend-prev.avg_spend)/prev.avg_spend;
   const latestCust=latest.customers/latest.days,prevCust=prev.customers/prev.days,cust=(latestCust-prevCust)/prevCust;
   const drivers=[['平均日商',daily],['1日平均客数',cust],['客単価',spend]];
-  insights=drivers.map(x=>\`<div class="insight"><b>${x[0]}</b><br><span class="${x[1]>=0?'up':'down'}">${x[1]>=0?'改善':'低下'} ${Math.abs(x[1]*100).toFixed(1)}%</span><div class="sub">${ymLabel(prev.month)}との比較</div></div>\`).join('');
+  insights=drivers.map(x=>`<div class="insight"><b>${x[0]}</b><br><span class="${x[1]>=0?'up':'down'}">${x[1]>=0?'改善':'低下'} ${Math.abs(x[1]*100).toFixed(1)}%</span><div class="sub">${ymLabel(prev.month)}との比較</div></div>`).join('');
  }
- $('host').innerHTML=\`<div class="notice ok" style="margin-bottom:12px"><b>月途中の月は、売上合計ではなく平均日商・客数・客単価で比較します。</b> 着地見込みは現在の平均日商×27営業日の参考値で、確定値ではありません。</div><div class="grid3">${insights}</div><div class="panel" style="margin-top:12px"><h3>月別 経営指標</h3>${table(['月','売上','営業日','平均日商','前月比','1日平均客数','前月比','客単価','前月比','着地・確定'],rows,true)}</div><div class="panel" style="margin-top:12px"><h3>読み方</h3><div class="insight"><b>売上の要因</b><br>売上は「営業日数 × 1日平均客数 × 客単価」で確認します。月途中は営業日数が少ないため、売上合計だけの前月比較はしません。</div><div class="insight"><b>公開範囲</b><br>店舗全体の集計値だけを表示し、個人名・給与明細・通帳画像・口座情報は表示しません。</div></div>\`;
+ $('host').innerHTML=`<div class="notice ok" style="margin-bottom:12px"><b>月途中の月は、売上合計ではなく平均日商・客数・客単価で比較します。</b> 着地見込みは現在の平均日商×27営業日の参考値で、確定値ではありません。</div><div class="grid3">${insights}</div><div class="panel" style="margin-top:12px"><h3>月別 経営指標</h3>${table(['月','売上','営業日','平均日商','前月比','1日平均客数','前月比','客単価','前月比','着地・確定'],rows,true)}</div><div class="panel" style="margin-top:12px"><h3>読み方</h3><div class="insight"><b>売上の要因</b><br>売上は「営業日数 × 1日平均客数 × 客単価」で確認します。月途中は営業日数が少ないため、売上合計だけの前月比較はしません。</div><div class="insight"><b>公開範囲</b><br>店舗全体の集計値だけを表示し、個人名・給与明細・通帳画像・口座情報は表示しません。</div></div>`;
 }
 function renderMonthly(){const grand=state.monthly.reduce((s,x)=>s+x.sales,0);const rows=state.monthly.map((r,i)=>{const prev=i?state.monthly[i-1]:null;const change=prev&&prev.sales?((r.sales-prev.sales)/prev.sales):null;return[ymLabel(r.month),yen(r.sales),pct(grand?r.sales/grand:0),r.days+'日',yen(r.avg_daily),r.customers+'人',yen(r.avg_spend),change===null?'—':`${change>=0?'+':''}${(change*100).toFixed(1)}%`]});$('host').innerHTML=`<div class="grid2"><div class="panel chart"><h3>月別売上</h3>${graphMeta('円・%','売上額と累計売上内の構成比')}${barSvg(state.monthly.map(x=>({label:ymLabel(x.month),value:x.sales})),'label','value',{total:grand})}</div><div class="panel chart"><h3>月別平均日商</h3>${graphMeta('円','棒の上に平均日商を表示')}${barSvg(state.monthly.map(x=>({label:ymLabel(x.month),value:x.avg_daily})),'label','value',{showShare:false})}</div></div><div class="panel" style="margin-top:12px">${table(['月','売上','累計構成比','営業日数','平均日商','客数','客単価','前月比'],rows)}</div>`}
 function weekdayName(d){return ['日','月','火','水','木','金','土'][new Date(d+'T00:00:00').getDay()]}
