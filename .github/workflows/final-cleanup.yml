@@ -1,0 +1,30 @@
+name: Finalize confirmed analysis
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/final_cleanup.py'
+      - '.github/workflows/final-cleanup.yml'
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply final cleanup and verify
+        run: python tools/final_cleanup.py
+      - name: Commit final verified dashboard
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No changes required'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m '社会保険等の確定情報を反映した経営分析完全版'
+          git push
