@@ -3,68 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>味一番つばさ 仕入・経費管理</title>
+<title>味一番つばさ 仕入・外注費・経費管理</title>
 <style>
-:root{--nav:#17365d;--blue:#4472c4;--bg:#f4f7fb;--text:#1f2937;--muted:#64748b;--ok:#e2f0d9;--warn:#fff2cc}
+:root{--nav:#17365d;--blue:#4472c4;--bg:#f4f7fb;--text:#1f2937;--muted:#64748b;--ok:#e2f0d9;--warn:#fff2cc;--danger:#fce4d6}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif;background:var(--bg);color:var(--text)}
 header{background:var(--nav);color:#fff;padding:16px 18px}header h1{margin:0;font-size:22px}header p{margin:7px 0 0;color:#dbeafe}
-main{max-width:1280px;margin:auto;padding:16px}.panel{background:#fff;border-radius:11px;padding:15px;box-shadow:0 1px 6px #ccd;margin-bottom:13px}.notice{padding:11px;border-radius:8px;background:var(--warn)}.ok{background:var(--ok)}
-a.button{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;padding:10px 14px;border-radius:7px;margin-bottom:13px}
-table{width:100%;border-collapse:collapse}th,td{padding:9px;border:1px solid #d9e2f3;text-align:left;vertical-align:top}th{background:var(--blue);color:#fff}.scroll{overflow:auto}.tag{display:inline-block;padding:3px 7px;border-radius:999px;background:#e7edf7;color:var(--nav);font-weight:700;font-size:12px}.muted{color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{background:#fff;border-radius:11px;padding:14px;box-shadow:0 1px 6px #ccd}.big{font-weight:800;color:var(--nav);font-size:19px;margin-top:5px}ol{line-height:1.8}@media(max-width:850px){.grid{grid-template-columns:1fr}th,td{font-size:13px}}
+main{max-width:1280px;margin:auto;padding:16px}.panel{background:#fff;border-radius:11px;padding:15px;box-shadow:0 1px 6px #ccd;margin-bottom:13px}.notice{padding:11px;border-radius:8px;background:var(--warn)}.ok{background:var(--ok)}.danger{background:var(--danger)}
+a.button{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;padding:10px 14px;border-radius:7px;margin:0 8px 13px 0}
+table{width:100%;border-collapse:collapse}th,td{padding:9px;border:1px solid #d9e2f3;text-align:left;vertical-align:top}th{background:var(--blue);color:#fff}.num{text-align:right;font-variant-numeric:tabular-nums}.scroll{overflow:auto}.tag{display:inline-block;padding:3px 7px;border-radius:999px;background:#e7edf7;color:var(--nav);font-weight:700;font-size:12px}.muted{color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{background:#fff;border-radius:11px;padding:14px;box-shadow:0 1px 6px #ccd}.big{font-weight:800;color:var(--nav);font-size:24px;margin-top:5px}.em{font-size:30px;color:#b91c1c}ol{line-height:1.8}@media(max-width:850px){.grid{grid-template-columns:1fr}th,td{font-size:13px}}
 </style>
 </head>
 <body>
-<header><h1>味一番つばさ　仕入・経費管理</h1><p>請求書PDF・通帳・商品出数をつなぐための取引先・費目マスター</p></header>
+<header><h1>味一番つばさ　仕入・外注費・経費管理</h1><p>請求書PDF・通帳・商品出数を結び付けた支出分析</p></header>
 <main>
 <a class="button" href="./">← 経営ダッシュボードへ戻る</a>
-<div class="notice ok"><b>反映済みの基本方針：</b>請求書を単なる「仕入」「経費」でまとめず、取引先・明細・対象商品・支払状況まで分けて管理します。金額や数量が原本で確認できない項目は推測せず「要確認」に残します。</div>
+<div class="notice ok"><b>復元済み：</b>経営改善提案書PDFに掲載されていた「仕入・外注支払」と主要出金カテゴリを、金額を変えずに再掲載しました。PDFで確認できない内訳は推測せず「要確認」のまま保持します。</div>
 
 <div class="grid" style="margin-top:13px">
-<div class="card"><div>管理対象</div><div class="big">請求書・通帳・出数</div><div class="muted">発生月と支払月を分離</div></div>
-<div class="card"><div>照合単位</div><div class="big">取引先＋明細</div><div class="muted">請求書総額だけで終わらせない</div></div>
-<div class="card"><div>不一致処理</div><div class="big">要確認として保持</div><div class="muted">無理に数字を合わせない</div></div>
+<div class="card"><div>仕入・外注支払</div><div class="big em">¥3,390,475</div><div class="muted">PDF掲載額・最重要管理項目</div></div>
+<div class="card"><div>主要出金カテゴリ合計</div><div class="big">¥7,697,331</div><div class="muted">下表9分類の単純合計</div></div>
+<div class="card"><div>未確定支出</div><div class="big">¥1,416,637</div><div class="muted">相手先・費目を原本で要確認</div></div>
 </div>
 
 <section class="panel" style="margin-top:13px">
+<h2>PDF掲載の主要出金カテゴリ</h2>
+<div class="scroll"><table>
+<thead><tr><th>区分</th><th class="num">金額</th><th>管理上の扱い</th></tr></thead>
+<tbody>
+<tr><td><b>仕入・外注支払</b></td><td class="num"><b>¥3,390,475</b></td><td>仕入先・外注先別に分解し、請求書と通帳を照合する中心項目</td></tr>
+<tr><td>給与</td><td class="num">¥1,679,049</td><td>人件費分析へ連動</td></tr>
+<tr><td>要確認支出</td><td class="num">¥1,416,637</td><td>推測で費目確定せず、通帳・請求書・領収書で確認</td></tr>
+<tr><td>税・社会保険等</td><td class="num">¥628,880</td><td>営業経費と区別して資金繰りへ反映</td></tr>
+<tr><td>現金経費引出</td><td class="num">¥427,702</td><td>対応する営業日・領収書と照合</td></tr>
+<tr><td>役員・関係者支払</td><td class="num">¥123,466</td><td>通常仕入・給与と分離</td></tr>
+<tr><td>通信費</td><td class="num">¥18,142</td><td>月次固定費として推移確認</td></tr>
+<tr><td>銀行手数料</td><td class="num">¥9,680</td><td>資金移動・振込件数と照合</td></tr>
+<tr><td>通信・システム費</td><td class="num">¥3,300</td><td>通信費と重複しないよう明細単位で管理</td></tr>
+<tr><th>合計</th><th class="num">¥7,697,331</th><th>上記9分類の合計</th></tr>
+</tbody></table></div>
+</section>
+
+<section class="panel">
+<h2>仕入・外注支払の通帳確認例</h2>
+<div class="notice danger"><b>重要：</b>3,390,475円を一括経費として終わらせず、各振込先と請求書へ戻して分類します。通帳で相手先が途中までしか読めないものは「要確認」のままです。</div>
+<div class="scroll" style="margin-top:12px"><table>
+<thead><tr><th>通帳摘要・相手先</th><th class="num">金額</th><th>状態</th></tr></thead>
+<tbody>
+<tr><td>カ）エイシン</td><td class="num">¥50,112</td><td>仕入・外注支払／確認済</td></tr>
+<tr><td>ホッカイドウ…</td><td class="num">¥531,187</td><td>仕入・外注支払／相手先要確認</td></tr>
+<tr><td>カ）サッポロタイセイ</td><td class="num">¥108,000</td><td>仕入・外注支払／確認済</td></tr>
+<tr><td>ユ）フジイ…</td><td class="num">¥315,700</td><td>仕入・外注支払／相手先要確認</td></tr>
+</tbody></table></div>
+<p class="muted">上記は通帳明細で確認できた例示行です。仕入・外注支払3,390,475円の全内訳を示す表ではありません。</p>
+</section>
+
+<section class="panel">
 <h2>取引先・費目マスター</h2>
 <div class="scroll"><table>
 <thead><tr><th>取引先</th><th>管理分類</th><th>内容</th><th>分析上の扱い</th></tr></thead>
 <tbody>
-<tr><td><b>マルカツ製麺</b></td><td><span class="tag">食材仕入</span></td><td>麺の請求書と餃子の請求書を別管理</td><td>麺はラーメン出数、餃子は単品・セットの餃子出数と照合</td></tr>
-<tr><td><b>北海道振興株式会社</b></td><td><span class="tag">店舗固定費・光熱費</span></td><td>家賃、共益費、看板掲載料、ネオン、防虫防鼠、電気、水道</td><td>請求書内の各明細を分割し、固定費と変動費を区別</td></tr>
-<tr><td><b>MAST社会保険労務士法人</b></td><td><span class="tag">管理費</span></td><td>社労士顧問料</td><td>販売数に連動しない月次管理費</td></tr>
-<tr><td><b>北海道ガス</b></td><td><span class="tag">光熱費</span></td><td>ガス代</td><td>月別推移と売上比率を確認</td></tr>
-<tr><td><b>ジョブマーケティング</b></td><td><span class="tag">採用費</span></td><td>募集広告</td><td>採用広告費。通常の給与とは分離して総人件費分析へ加算</td></tr>
-<tr><td><b>東日本管理サービス</b></td><td><span class="tag">福利厚生・住居費</span></td><td>社員1名の家賃</td><td>店舗家賃と混同せず、社員関連費用として管理</td></tr>
-<tr><td><b>大熊商店</b></td><td><span class="tag">食材仕入</span></td><td>調味料など</td><td>明細ごとに対象メニュー・共通原材料へ配賦</td></tr>
-<tr><td><b>イマイ</b></td><td><span class="tag">飲料仕入</span></td><td>ビール、お酒、ジュース</td><td>券売機の各飲料出数・売上と照合し、飲料原価率を計算</td></tr>
-<tr><td><b>いくら仕入先</b></td><td><span class="tag">食材仕入</span></td><td>つばさラーメンに使用するいくら</td><td>つばさラーメンの出数と結び付け、1杯当たり原価と理論使用量を確認</td></tr>
+<tr><td><b>マルカツ製麺</b></td><td><span class="tag">食材仕入</span></td><td>麺と餃子を別管理</td><td>ラーメン出数・餃子出数と照合</td></tr>
+<tr><td><b>北海道振興株式会社</b></td><td><span class="tag">固定費・光熱費</span></td><td>家賃、共益費、看板掲載料、ネオン、防虫防鼠、電気、水道</td><td>請求書内の明細ごとに分割</td></tr>
+<tr><td><b>MAST社会保険労務士法人</b></td><td><span class="tag">管理費</span></td><td>社労士顧問料</td><td>月次固定費</td></tr>
+<tr><td><b>北海道ガス</b></td><td><span class="tag">光熱費</span></td><td>ガス代</td><td>売上比率と月別推移</td></tr>
+<tr><td><b>ジョブマーケティング</b></td><td><span class="tag">採用費</span></td><td>求人広告費</td><td>給与と分離し総人件費分析へ加算</td></tr>
+<tr><td><b>東日本管理サービス</b></td><td><span class="tag">福利厚生・住居費</span></td><td>社員1名の家賃</td><td>店舗家賃と分離</td></tr>
+<tr><td><b>大熊商店</b></td><td><span class="tag">食材仕入</span></td><td>調味料など</td><td>対象メニュー・共通原材料へ配賦</td></tr>
+<tr><td><b>イマイ</b></td><td><span class="tag">飲料仕入</span></td><td>ビール、お酒、ジュース</td><td>飲料出数・売上・原価率と照合</td></tr>
+<tr><td><b>いくら仕入先</b></td><td><span class="tag">食材仕入</span></td><td>つばさラーメン用いくら</td><td>つばさラーメン出数と使用量を照合</td></tr>
 </tbody></table></div>
 </section>
 
 <section class="panel">
-<h2>商品出数との連動</h2>
-<div class="scroll"><table>
-<thead><tr><th>仕入品</th><th>対応する販売商品</th><th>確認する指標</th></tr></thead>
-<tbody>
-<tr><td>麺</td><td>各ラーメン、ラーメン＋餃子セット、大盛り等</td><td>仕入玉数、理論使用数、在庫、廃棄・サービス・差異</td></tr>
-<tr><td>餃子</td><td>餃子単品、味噌・醤油・塩＋餃子セット</td><td>仕入個数、販売皿数×1皿個数、理論在庫、差異</td></tr>
-<tr><td>いくら</td><td>つばさラーメン</td><td>販売杯数×1杯使用量、仕入量、理論在庫、1杯当たり原価</td></tr>
-<tr><td>ビール・酒・ジュース</td><td>券売機の各飲料商品</td><td>仕入本数・樽数、販売出数、売上、飲料原価率、ロス</td></tr>
-<tr><td>調味料</td><td>各ラーメン・餃子等</td><td>共通原価またはレシピ別使用量として配賦</td></tr>
-</tbody></table></div>
-</section>
-
-<section class="panel">
-<h2>請求書を反映する手順</h2>
-<ol>
-<li>PDFから請求日、対象期間、取引先、明細、数量、税率、税額、請求総額を読み取る。</li>
-<li>明細合計・消費税・請求総額を相互検算する。</li>
-<li>通帳の実際の出金と照合し、支払済・未払・一部支払・要確認を判定する。</li>
-<li>食材・飲料は券売機の出数と結び付け、理論使用量と差異を計算する。</li>
-<li>費用発生月と実際の支払月を分け、損益分析と資金繰り分析の両方へ反映する。</li>
-</ol>
-<div class="notice"><b>現在の状態：</b>取引先と費目の分類ルールをWebへ反映済みです。個別請求額・数量は、原本PDFから再確認できたものだけを次段階で登録します。</div>
+<h2>検証結果</h2>
+<ul>
+<li>仕入・外注支払：3,390,475円を掲載</li>
+<li>主要出金9分類：合計7,697,331円と再計算一致</li>
+<li>不明な取引先・内訳：推測せず要確認表示</li>
+<li>取引先別費目ルール：削除せず保持</li>
+</ul>
 </section>
 </main>
 </body>
