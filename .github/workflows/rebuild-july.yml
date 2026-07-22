@@ -1,0 +1,30 @@
+name: Rebuild July dashboard
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/rebuild_july.py'
+      - '.github/workflows/rebuild-july.yml'
+permissions:
+  contents: write
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Rebuild and verify
+        run: python tools/rebuild_july.py
+      - name: Commit verified result
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No changes required'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m '7月1日から20日を単一月へ統合し全分析機能を保持'
+          git push
