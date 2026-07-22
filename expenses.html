@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>味一番つばさ 仕入・経費管理</title>
+<style>
+:root{--nav:#17365d;--blue:#4472c4;--bg:#f4f7fb;--text:#1f2937;--muted:#64748b;--ok:#e2f0d9;--warn:#fff2cc}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--nav);color:#fff;padding:16px 18px}header h1{margin:0;font-size:22px}header p{margin:7px 0 0;color:#dbeafe}
+main{max-width:1280px;margin:auto;padding:16px}.panel{background:#fff;border-radius:11px;padding:15px;box-shadow:0 1px 6px #ccd;margin-bottom:13px}.notice{padding:11px;border-radius:8px;background:var(--warn)}.ok{background:var(--ok)}
+a.button{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;padding:10px 14px;border-radius:7px;margin-bottom:13px}
+table{width:100%;border-collapse:collapse}th,td{padding:9px;border:1px solid #d9e2f3;text-align:left;vertical-align:top}th{background:var(--blue);color:#fff}.scroll{overflow:auto}.tag{display:inline-block;padding:3px 7px;border-radius:999px;background:#e7edf7;color:var(--nav);font-weight:700;font-size:12px}.muted{color:var(--muted);font-size:13px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{background:#fff;border-radius:11px;padding:14px;box-shadow:0 1px 6px #ccd}.big{font-weight:800;color:var(--nav);font-size:19px;margin-top:5px}ol{line-height:1.8}@media(max-width:850px){.grid{grid-template-columns:1fr}th,td{font-size:13px}}
+</style>
+</head>
+<body>
+<header><h1>味一番つばさ　仕入・経費管理</h1><p>請求書PDF・通帳・商品出数をつなぐための取引先・費目マスター</p></header>
+<main>
+<a class="button" href="./">← 経営ダッシュボードへ戻る</a>
+<div class="notice ok"><b>反映済みの基本方針：</b>請求書を単なる「仕入」「経費」でまとめず、取引先・明細・対象商品・支払状況まで分けて管理します。金額や数量が原本で確認できない項目は推測せず「要確認」に残します。</div>
+
+<div class="grid" style="margin-top:13px">
+<div class="card"><div>管理対象</div><div class="big">請求書・通帳・出数</div><div class="muted">発生月と支払月を分離</div></div>
+<div class="card"><div>照合単位</div><div class="big">取引先＋明細</div><div class="muted">請求書総額だけで終わらせない</div></div>
+<div class="card"><div>不一致処理</div><div class="big">要確認として保持</div><div class="muted">無理に数字を合わせない</div></div>
+</div>
+
+<section class="panel" style="margin-top:13px">
+<h2>取引先・費目マスター</h2>
+<div class="scroll"><table>
+<thead><tr><th>取引先</th><th>管理分類</th><th>内容</th><th>分析上の扱い</th></tr></thead>
+<tbody>
+<tr><td><b>マルカツ製麺</b></td><td><span class="tag">食材仕入</span></td><td>麺の請求書と餃子の請求書を別管理</td><td>麺はラーメン出数、餃子は単品・セットの餃子出数と照合</td></tr>
+<tr><td><b>北海道振興株式会社</b></td><td><span class="tag">店舗固定費・光熱費</span></td><td>家賃、共益費、看板掲載料、ネオン、防虫防鼠、電気、水道</td><td>請求書内の各明細を分割し、固定費と変動費を区別</td></tr>
+<tr><td><b>MAST社会保険労務士法人</b></td><td><span class="tag">管理費</span></td><td>社労士顧問料</td><td>販売数に連動しない月次管理費</td></tr>
+<tr><td><b>北海道ガス</b></td><td><span class="tag">光熱費</span></td><td>ガス代</td><td>月別推移と売上比率を確認</td></tr>
+<tr><td><b>ジョブマーケティング</b></td><td><span class="tag">採用費</span></td><td>募集広告</td><td>採用広告費。通常の給与とは分離して総人件費分析へ加算</td></tr>
+<tr><td><b>東日本管理サービス</b></td><td><span class="tag">福利厚生・住居費</span></td><td>社員1名の家賃</td><td>店舗家賃と混同せず、社員関連費用として管理</td></tr>
+<tr><td><b>大熊商店</b></td><td><span class="tag">食材仕入</span></td><td>調味料など</td><td>明細ごとに対象メニュー・共通原材料へ配賦</td></tr>
+<tr><td><b>イマイ</b></td><td><span class="tag">飲料仕入</span></td><td>ビール、お酒、ジュース</td><td>券売機の各飲料出数・売上と照合し、飲料原価率を計算</td></tr>
+<tr><td><b>いくら仕入先</b></td><td><span class="tag">食材仕入</span></td><td>つばさラーメンに使用するいくら</td><td>つばさラーメンの出数と結び付け、1杯当たり原価と理論使用量を確認</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="panel">
+<h2>商品出数との連動</h2>
+<div class="scroll"><table>
+<thead><tr><th>仕入品</th><th>対応する販売商品</th><th>確認する指標</th></tr></thead>
+<tbody>
+<tr><td>麺</td><td>各ラーメン、ラーメン＋餃子セット、大盛り等</td><td>仕入玉数、理論使用数、在庫、廃棄・サービス・差異</td></tr>
+<tr><td>餃子</td><td>餃子単品、味噌・醤油・塩＋餃子セット</td><td>仕入個数、販売皿数×1皿個数、理論在庫、差異</td></tr>
+<tr><td>いくら</td><td>つばさラーメン</td><td>販売杯数×1杯使用量、仕入量、理論在庫、1杯当たり原価</td></tr>
+<tr><td>ビール・酒・ジュース</td><td>券売機の各飲料商品</td><td>仕入本数・樽数、販売出数、売上、飲料原価率、ロス</td></tr>
+<tr><td>調味料</td><td>各ラーメン・餃子等</td><td>共通原価またはレシピ別使用量として配賦</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="panel">
+<h2>請求書を反映する手順</h2>
+<ol>
+<li>PDFから請求日、対象期間、取引先、明細、数量、税率、税額、請求総額を読み取る。</li>
+<li>明細合計・消費税・請求総額を相互検算する。</li>
+<li>通帳の実際の出金と照合し、支払済・未払・一部支払・要確認を判定する。</li>
+<li>食材・飲料は券売機の出数と結び付け、理論使用量と差異を計算する。</li>
+<li>費用発生月と実際の支払月を分け、損益分析と資金繰り分析の両方へ反映する。</li>
+</ol>
+<div class="notice"><b>現在の状態：</b>取引先と費目の分類ルールをWebへ反映済みです。個別請求額・数量は、原本PDFから再確認できたものだけを次段階で登録します。</div>
+</section>
+</main>
+</body>
+</html>
