@@ -1,0 +1,25 @@
+name: Run July 22 reflection
+on:
+  push:
+    paths:
+      - '.github/workflows/run-july22-reflection.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse verified reflection script
+        run: |
+          awk '/python - <<'"'"'PY'"'"'/{on=1;next} on && /^          PY$/{exit} on{sub(/^          /,"");print}' .github/workflows/reflect-2026-07-22.yml > /tmp/apply.py
+          python /tmp/apply.py
+      - name: Commit reflected dashboard
+        run: |
+          if git diff --quiet; then echo 'No changes'; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m '7月22日売上データを公開版へ反映'
+          git push
