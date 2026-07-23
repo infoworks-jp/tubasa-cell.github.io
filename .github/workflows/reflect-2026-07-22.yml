@@ -27,10 +27,19 @@ jobs:
               print('7/22 data already applied')
               raise SystemExit(0)
 
-          m = re.search(r'const EMBEDDED_DATA=(\{.*?\});\nfunction embeddedKey', text, re.S)
-          if not m:
-              raise RuntimeError('EMBEDDED_DATA was not found')
-          data = json.loads(m.group(1))
+          token = 'const EMBEDDED_DATA='
+          start = text.find(token)
+          if start < 0:
+              raise RuntimeError('EMBEDDED_DATA start was not found')
+          json_start = start + len(token)
+          end = text.find(';\nfunction embeddedKey', json_start)
+          if end < 0:
+              end = text.find(';\r\nfunction embeddedKey', json_start)
+          if end < 0:
+              end = text.find(';\n\nfunction embeddedKey', json_start)
+          if end < 0:
+              raise RuntimeError('EMBEDDED_DATA end was not found')
+          data = json.loads(text[json_start:end])
 
           daily = {
               'business_date':'2026-07-22','total_sales':278000,'customers':199,
@@ -172,7 +181,7 @@ jobs:
           if 'daily_all' in data: refresh_quality('quality_all','daily_all','products_all','hourly_all')
 
           new_json=json.dumps(data,ensure_ascii=False,separators=(',',':'))
-          text=text[:m.start(1)]+new_json+text[m.end(1):]
+          text=text[:json_start]+new_json+text[end:]
           text=text.replace('売上は7月20日分まで','売上は7月22日分まで')
           text=text.replace('データ更新 2026/7/18（通帳6・7頁反映）','データ更新 2026/7/23（7月22日売上反映）')
           text=text.replace('</body>', marker+'\n</body>')
