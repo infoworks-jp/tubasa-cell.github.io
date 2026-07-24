@@ -1,4 +1,5 @@
 name: Deploy GitHub Pages
+# No-op metadata update for controlled redeploy trigger.
 
 on:
   push:
