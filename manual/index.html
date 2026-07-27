@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>つばさ1 データ更新運用マニュアル</title>
+  <style>
+    :root{color-scheme:light;--ink:#202020;--muted:#666;--line:#d8d8d8;--paper:#fff;--bg:#f4f1ea;--accent:#8b1e1e;--ok:#1f6f3d;--warn:#9a6400}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.75}
+    main{max-width:900px;margin:36px auto;padding:42px;background:var(--paper);box-shadow:0 8px 28px rgba(0,0,0,.08)}
+    h1{margin:0 0 8px;font-size:clamp(28px,5vw,46px);line-height:1.2}h2{margin-top:42px;padding-bottom:8px;border-bottom:2px solid var(--ink)}h3{margin-top:28px}
+    .lead{font-size:1.12rem}.stamp{display:inline-block;margin:12px 0 26px;padding:7px 12px;border:2px solid var(--accent);color:var(--accent);font-weight:700;letter-spacing:.06em}
+    .box{padding:18px 20px;border:1px solid var(--line);background:#fafafa;margin:18px 0}.danger{border-left:6px solid var(--accent)}.ok{border-left:6px solid var(--ok)}.warn{border-left:6px solid var(--warn)}
+    code{background:#f0f0f0;padding:.1em .35em;border-radius:4px}.status{width:100%;border-collapse:collapse;margin:16px 0}.status th,.status td{border:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}.status th{background:#f5f5f5}
+    ol li,ul li{margin:.4em 0}.footer{margin-top:48px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:.92rem}
+    @media(max-width:700px){main{margin:0;padding:24px 18px;box-shadow:none}.status{font-size:.9rem}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>つばさ1<br>データ更新運用マニュアル</h1>
+  <div class="stamp">原本主義・推測禁止・公開確認必須</div>
+  <p class="lead">このページは、味一番つばさの公開中経営分析サイト「つばさ1」を安全に更新するための最優先ルールです。新しいチャット、別担当者、別のAIで作業する場合も、この手順を省略してはいけません。</p>
+
+  <div class="box danger"><strong>最重要：</strong>原本にない数字は入力しない。読めない数字は「不明」とする。過去の会話、記憶、前後の日、平均値、推測から補完しない。</div>
+
+  <h2>1. 対象サイト</h2>
+  <p><strong>つばさ1 公開サイト</strong><br><a href="https://infoworks-jp.github.io/tubasa-cell.github.io/">https://infoworks-jp.github.io/tubasa-cell.github.io/</a></p>
+
+  <h2>2. 唯一認める情報源</h2>
+  <ul>
+    <li>券売機ジャーナル原本画像</li>
+    <li>通帳・入出金明細の原本画像</li>
+    <li>請求書・領収書の原本画像</li>
+    <li>給与・人件費資料の原本</li>
+  </ul>
+  <p>上記以外の数値は、参考情報としても確定値に使用しません。</p>
+
+  <h2>3. 作業工程</h2>
+  <table class="status">
+    <thead><tr><th>段階</th><th>意味</th><th>完了条件</th></tr></thead>
+    <tbody>
+      <tr><td>受信</td><td>原本画像を受け取った</td><td>画像が確認できる</td></tr>
+      <tr><td>OCR完了</td><td>画像から文字・数値を読み取った</td><td>読み取り値を原本と並べて表示した</td></tr>
+      <tr><td>検証完了</td><td>営業日、売上、客数、客単価、商品別、時間帯別を原本と照合した</td><td>不一致・不明箇所がない、または不明として明示した</td></tr>
+      <tr><td>GitHub更新完了</td><td>リポジトリのデータを更新した</td><td>コミットが作成された</td></tr>
+      <tr><td>公開確認完了</td><td>GitHub Pagesの公開画面で反映を確認した</td><td>原本・登録値・公開値が一致した</td></tr>
+      <tr><td>原本保管解除可</td><td>原本を別の保管方法へ移せる状態</td><td>公開確認と監査記録が完了した</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box warn"><strong>「読み込みました」「反映しました」だけの報告は禁止。</strong>必ず上記のどの段階まで完了したかを明記します。</div>
+
+  <h2>4. 更新前に必ず表示する内容</h2>
+  <ol>
+    <li>営業日</li>
+    <li>原本に印字された集計日時・クリア日時</li>
+    <li>売上金額</li>
+    <li>客数</li>
+    <li>客単価</li>
+    <li>取消・精算差引がある場合はその件数と金額</li>
+    <li>更新前の公開値</li>
+    <li>更新後の予定値</li>
+    <li>差分</li>
+  </ol>
+
+  <h2>5. 数字の出典表記</h2>
+  <p>すべての確定値に原本IDを付けます。</p>
+  <div class="box"><code>KT-20260722-001</code>＝券売機・2026年7月22日営業分・1枚目<br><code>BK-20260722-001</code>＝通帳・2026年7月22日・1枚目<br><code>INV-202607-001</code>＝請求書・2026年7月・1件目</div>
+
+  <h2>6. 禁止事項</h2>
+  <ul>
+    <li>原本にない数字を作る</li>
+    <li>過去チャットの数字を原本確認なしで再利用する</li>
+    <li>前後の日付から類推する</li>
+    <li>平均値で埋める</li>
+    <li>OCRで欠けた桁を推測する</li>
+    <li>GitHubへコミットしただけで「反映完了」と報告する</li>
+    <li>公開ページを確認せずに原本破棄を促す</li>
+  </ul>
+
+  <h2>7. 公開後監査</h2>
+  <p>公開後、次の項目を原本・登録データ・公開画面の3点で照合します。</p>
+  <ul>
+    <li>日別売上</li>
+    <li>月間累計</li>
+    <li>客数</li>
+    <li>客単価</li>
+    <li>商品別集計</li>
+    <li>時間帯別集計</li>
+  </ul>
+  <div class="box ok"><strong>1円、1人、1件でも違えば「公開確認完了」にしません。</strong>原因を特定し、修正後に再確認します。</div>
+
+  <h2>8. 作業報告の固定形式</h2>
+  <pre class="box">■ 原本ID
+KT-YYYYMMDD-001
+
+■ 受信
+完了 / 未完了
+
+■ OCR
+完了 / 未完了
+
+■ 原本照合
+完了 / 不一致あり / 判読不能あり
+
+■ GitHub更新
+完了 / 未実施 / 失敗
+
+■ 公開ページ確認
+完了 / 未確認 / 不一致あり
+
+■ 原本
+保管継続 / 保管解除可</pre>
+
+  <h2>9. チャットが変わった場合</h2>
+  <p>新しいチャットでは、作業開始前にこのページを指定し、次の一文を使用します。</p>
+  <div class="box"><strong>「つばさ1データ更新運用マニュアルに従い、原本主義・推測禁止・公開確認必須で作業してください。」</strong></div>
+
+  <h2>10. 現在確認済みの訂正値</h2>
+  <table class="status">
+    <thead><tr><th>営業日</th><th>売上</th><th>客数</th><th>客単価</th><th>状態</th></tr></thead>
+    <tbody>
+      <tr><td>2026-07-22</td><td>163,810円</td><td>102人</td><td>1,605円</td><td>原本確認済み</td></tr>
+      <tr><td>2026-07-23</td><td>155,530円</td><td>115人</td><td>1,352円</td><td>原本確認済み</td></tr>
+    </tbody>
+  </table>
+  <p>上記数値も公開サイト反映後に、公開画面との再照合が必要です。</p>
+
+  <div class="footer">制定日：2026年7月27日<br>対象：味一番つばさ「つばさ1」暫定運用<br>本マニュアルと異なる指示が出た場合は、原本主義・推測禁止・公開確認必須を優先します。</div>
+</main>
+</body>
+</html>
