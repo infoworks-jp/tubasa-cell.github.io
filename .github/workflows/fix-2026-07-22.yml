@@ -1,0 +1,119 @@
+name: Fix 2026-07-22 daily sales
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fix-2026-07-22.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Correct only 2026-07-22 and rebuild summaries
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          m=re.search(r'const EMBEDDED_DATA=(\{.*?\});\s*$', s, re.S)
+          if not m:
+              raise SystemExit('EMBEDDED_DATA not found')
+          data=json.loads(m.group(1))
+
+          row={
+            'business_date':'2026-07-22',
+            'total_sales':196500,
+            'customers':162,
+            'avg_spend':1213,
+            'issued_count':252,
+            'settlement_count':None,
+            'settlement_amount':None,
+            'net_count':None,
+            'lunch_sales':None,
+            'evening_sales':None,
+            'late_sales':None,
+            'notes':'7/22券売機ジャーナル原本から修正。総売上196,500円、入店数162人、客単価1,213円、発行数252。時間帯・商品別・精算内訳は原本再確認待ち。'
+          }
+
+          july=data.get('daily_2026-07',[])
+          replaced=False
+          out=[]
+          for r in july:
+              if r.get('business_date')=='2026-07-22':
+                  out.append(row); replaced=True
+              else:
+                  out.append(r)
+          if not replaced:
+              out.append(row)
+          out=sorted(out,key=lambda r:r.get('business_date',''))
+          data['daily_2026-07']=out
+
+          june=data.get('daily_2026-06',[])
+          data['daily_all']=sorted(june+out,key=lambda r:r.get('business_date',''))
+
+          def operating(rows):
+              return [r for r in rows if (r.get('total_sales') or 0)>0]
+          ops=operating(out)
+          sales=sum(r.get('total_sales') or 0 for r in ops)
+          cust=sum(r.get('customers') or 0 for r in ops)
+          days=len(ops)
+          avg_daily=sales/days if days else 0
+          avg_spend=sales/cust if cust else 0
+          proj=avg_daily*27 if days else 0
+
+          monthly=data.get('monthly',[])
+          for r in monthly:
+              if r.get('month')=='2026-07':
+                  r.update({'sales':sales,'customers':cust,'days':days,'avg_daily':avg_daily,'avg_spend':avg_spend})
+
+          june_sales=next((r.get('sales',0) for r in monthly if r.get('month')=='2026-06'),0)
+          june_cust=next((r.get('customers',0) for r in monthly if r.get('month')=='2026-06'),0)
+          june_days=next((r.get('days',0) for r in monthly if r.get('month')=='2026-06'),0)
+          total_sales=june_sales+sales
+          total_cust=june_cust+cust
+          total_days=june_days+days
+
+          ov={
+            'month':'2026-07','total_sales':total_sales,'total_customers':total_cust,'total_days':total_days,
+            'month_sales':sales,'month_customers':cust,'month_days':days,
+            'avg_daily':avg_daily,'avg_spend':avg_spend,'projection':proj,
+            'month_count':2,'avg_monthly':total_sales/2 if total_sales else 0,
+            'avg_customers_per_day':total_cust/total_days if total_days else 0
+          }
+          data['overview_2026-07']=ov
+          if 'bootstrap' in data:
+              data['bootstrap']['overview']=ov
+
+          s=s[:m.start(1)]+json.dumps(data,ensure_ascii=False,separators=(',',':'))+s[m.end(1):]
+          s=s.replace('売上は7月22日分まで','売上は7月23日分まで')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Verify corrected row
+        run: |
+          python - <<'PY'
+          import re,json
+          s=open('index.html',encoding='utf-8').read()
+          m=re.search(r'const EMBEDDED_DATA=(\{.*?\});\s*$',s,re.S)
+          d=json.loads(m.group(1))
+          rows=[r for r in d['daily_2026-07'] if r.get('business_date')=='2026-07-22']
+          assert len(rows)==1, rows
+          r=rows[0]
+          assert r['total_sales']==196500 and r['customers']==162 and r['avg_spend']==1213 and r['issued_count']==252, r
+          rows23=[r for r in d['daily_2026-07'] if r.get('business_date')=='2026-07-23']
+          assert len(rows23)==1 and rows23[0]['total_sales']==155530, rows23
+          print(r)
+          PY
+      - name: Commit correction
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m '7月22日売上を196,500円へ修正 [skip ci]' || exit 0
+          git push
