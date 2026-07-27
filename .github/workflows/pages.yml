@@ -6,6 +6,8 @@ on:
     paths:
       - '*.html'
       - 'assets/**'
+      - 'manual/**'
+      - 'docs/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -37,6 +39,8 @@ jobs:
           mkdir _site
           find . -maxdepth 1 -type f \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.json' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' -o -name '*.svg' -o -name '*.ico' \) -exec cp {} _site/ \;
           if [ -d assets ]; then cp -R assets _site/assets; fi
+          if [ -d manual ]; then cp -R manual _site/manual; fi
+          if [ -d docs ]; then cp -R docs _site/docs; fi
           python - <<'PY'
           from pathlib import Path
 
@@ -107,6 +111,11 @@ jobs:
               ep.write_text(e, encoding='utf-8')
           PY
           touch _site/.nojekyll
+      - name: Verify required files
+        run: |
+          test -f _site/index.html        || (echo "ERROR: _site/index.html missing" && exit 1)
+          test -f _site/manual/index.html || (echo "ERROR: _site/manual/index.html missing" && exit 1)
+          echo "OK: index.html and manual/index.html are present"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
