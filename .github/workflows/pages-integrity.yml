@@ -1,0 +1,46 @@
+name: Pages integrity check
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 0 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required public files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s index.html
+          test -s manual/index.html
+          test -s manual.html
+          test -f .nojekyll
+          grep -q '原本主義・推測禁止・公開確認必須' manual/index.html
+          grep -q 'つばさ1' manual/index.html
+
+      - name: Validate internal manual link
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'url=./manual/' manual.html
+
+      - name: Publish verification summary
+        shell: bash
+        run: |
+          {
+            echo '## GitHub Pages integrity'
+            echo '- index.html: OK'
+            echo '- manual/index.html: OK'
+            echo '- manual.html fallback: OK'
+            echo '- .nojekyll: OK'
+          } >> "$GITHUB_STEP_SUMMARY"
