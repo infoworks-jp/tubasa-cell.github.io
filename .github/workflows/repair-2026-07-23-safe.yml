@@ -1,0 +1,148 @@
+name: Repair July 23 sales safely
+
+on:
+  push:
+    paths:
+      - '.github/workflows/repair-2026-07-23-safe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add only July 23 and rebuild derived daily totals
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re, copy
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          m = re.search(r'const EMBEDDED_DATA=(\{.*?\});\s*\n', text, re.S)
+          if not m:
+              raise SystemExit('EMBEDDED_DATA not found')
+          data = json.loads(m.group(1))
+
+          before_june = copy.deepcopy(data['daily_2026-06'])
+          before_july = copy.deepcopy(data['daily_2026-07'])
+
+          row = {
+            'business_date':'2026-07-23',
+            'total_sales':155530,
+            'customers':115,
+            'avg_spend':1352,
+            'issued_count':164,
+            'settlement_count':-2,
+            'settlement_amount':-1600,
+            'net_count':162,
+            'lunch_sales':14880,
+            'evening_sales':122290,
+            'late_sales':19960,
+            'notes':'集計日時7/24 02:45を営業日7/23として反映。時間帯別は精算前157,130円、精算-1,600円、総計155,530円。'
+          }
+
+          july = [r for r in before_july if r.get('business_date') != '2026-07-23'] + [row]
+          july.sort(key=lambda r:r['business_date'])
+
+          # Existing rows must remain byte-for-byte equivalent as Python objects.
+          old_without_23 = [r for r in before_july if r.get('business_date') != '2026-07-23']
+          new_without_23 = [r for r in july if r.get('business_date') != '2026-07-23']
+          if old_without_23 != new_without_23:
+              raise SystemExit('Historical July rows changed; aborting')
+
+          data['daily_2026-07'] = july
+          data['daily_all'] = sorted(before_june + july, key=lambda r:r['business_date'])
+
+          def operating(rows):
+              return [r for r in rows if (r.get('total_sales') or 0) > 0]
+          def summary(rows):
+              ops=operating(rows)
+              sales=sum(int(r.get('total_sales') or 0) for r in ops)
+              customers=sum(int(r.get('customers') or 0) for r in ops)
+              days=len(ops)
+              return sales,customers,days,(sales/days if days else 0),(sales/customers if customers else 0)
+
+          june_sales,june_customers,june_days,june_avg,june_spend = summary(before_june)
+          july_sales,july_customers,july_days,july_avg,july_spend = summary(july)
+          all_sales,all_customers,all_days,all_avg,all_spend = summary(data['daily_all'])
+
+          data['monthly'] = [
+            {'month':'2026-06','sales':june_sales,'customers':june_customers,'days':june_days,'avg_daily':june_avg,'avg_spend':june_spend},
+            {'month':'2026-07','sales':july_sales,'customers':july_customers,'days':july_days,'avg_daily':july_avg,'avg_spend':july_spend}
+          ]
+
+          avg_monthly=(june_sales+july_sales)/2
+          avg_cpd=(june_customers+july_customers)/(june_days+july_days)
+          data['overview_2026-07']={
+            'month':'2026-07','total_sales':all_sales,'total_customers':all_customers,'total_days':all_days,
+            'month_sales':july_sales,'month_customers':july_customers,'month_days':july_days,
+            'avg_daily':july_avg,'avg_spend':july_spend,'projection':july_avg*27,
+            'month_count':2,'avg_monthly':avg_monthly,'avg_customers_per_day':avg_cpd
+          }
+          data['overview_all']={
+            'month':'all','total_sales':all_sales,'total_customers':all_customers,'total_days':all_days,
+            'month_sales':all_sales,'month_customers':all_customers,'month_days':all_days,
+            'avg_daily':all_avg,'avg_spend':all_spend,'projection':0,
+            'month_count':2,'avg_monthly':avg_monthly,'avg_customers_per_day':avg_cpd
+          }
+          data['bootstrap']['overview']=data['overview_2026-07']
+
+          # Add July 23 hourly figures without altering existing hour labels.
+          additions={
+            '0:00':(12,10900),'1:00':(8,7360),'2:00':(2,1700),'3:00':(0,0),'4:00':(0,0),'5:00':(0,0),
+            '6:00':(0,0),'7:00':(0,0),'8:00':(0,0),'9:00':(0,0),'10:00':(0,0),'11:00':(0,0),
+            '12:00':(3,3300),'13:00':(6,5300),'14:00':(1,2000),'15:00':(2,2200),'16:00':(0,0),'17:00':(2,2080),
+            '18:00':(15,14350),'19:00':(14,13100),'20:00':(7,7750),'21:00':(34,34910),'22:00':(30,28170),'23:00':(28,24010)
+          }
+          rows=data['hourly_2026-07']['rows']
+          for r in rows:
+              c,s=additions[r['hour']]
+              r['issued_count']=int(r.get('issued_count') or 0)+c
+              r['sales']=int(r.get('sales') or 0)+s
+          total_hourly=sum(r['sales'] for r in rows)
+          for r in rows:
+              r['share']=r['sales']/total_hourly if total_hourly else 0
+
+          # Rebuild all-hours from month rows to avoid partial/missing-date accumulation.
+          june_by={r['hour']:r for r in data['hourly_2026-06']['rows']}
+          all_rows=[]
+          for r in rows:
+              j=june_by[r['hour']]
+              sales=int(j.get('sales') or 0)+int(r.get('sales') or 0)
+              count=int(j.get('issued_count') or 0)+int(r.get('issued_count') or 0)
+              all_rows.append({'hour':r['hour'],'period':r['period'],'issued_count':count,'sales':sales,'share':0})
+          all_hourly_total=sum(r['sales'] for r in all_rows)
+          for r in all_rows:
+              r['share']=r['sales']/all_hourly_total if all_hourly_total else 0
+          data['hourly_all']={'rows':all_rows}
+
+          # Update visible notice only.
+          text=text.replace('売上は7月22日分まで','売上は7月23日分まで')
+          new_json=json.dumps(data, ensure_ascii=False, separators=(',',':'))
+          text=text[:m.start(1)] + new_json + text[m.end(1):]
+          path.write_text(text, encoding='utf-8')
+
+          # Final hard checks.
+          check=json.loads(re.search(r'const EMBEDDED_DATA=(\{.*?\});\s*\n', text, re.S).group(1))
+          got=[r for r in check['daily_2026-07'] if r['business_date']=='2026-07-23']
+          assert len(got)==1 and got[0]['total_sales']==155530 and got[0]['customers']==115
+          assert sum(r['total_sales'] for r in operating(check['daily_2026-07']))==july_sales
+          assert check['monthly'][1]['sales']==july_sales
+          print('July sales:',july_sales,'customers:',july_customers,'days:',july_days)
+          PY
+
+      - name: Commit verified repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m '7月23日売上を既存日別を保持して修正反映 [skip ci]'
+          git push
