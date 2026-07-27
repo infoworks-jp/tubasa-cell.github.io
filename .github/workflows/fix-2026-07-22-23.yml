@@ -1,0 +1,145 @@
+name: Fix July 22 and 23 sales
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-2026-07-22-23.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Correct embedded dashboard data
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          m = re.search(r'const EMBEDDED_DATA=(\{.*?\});\s*\n', text, re.S)
+          if not m:
+              raise SystemExit('EMBEDDED_DATA not found')
+          data = json.loads(m.group(1))
+
+          row23 = {
+            'business_date':'2026-07-23','total_sales':155530,'customers':115,'avg_spend':1352.0,
+            'issued_count':164,'settlement_count':-2,'settlement_amount':-1600,'net_count':162,
+            'lunch_sales':14880,'evening_sales':120690,'late_sales':19960,
+            'notes':'集計日時7/24 02:45を営業日7/23として反映。券売機原本確認済み。'
+          }
+
+          # 7/22の278,000円は7/19と重複した誤登録のため削除。7/23を原本どおり追加。
+          july = [r for r in data['daily_2026-07'] if r.get('business_date') not in ('2026-07-22','2026-07-23')]
+          july.append(row23)
+          july.sort(key=lambda r:r['business_date'])
+          data['daily_2026-07'] = july
+          june = data.get('daily_2026-06', [])
+          data['daily_all'] = sorted(june + july, key=lambda r:r['business_date'])
+
+          sales = sum(r.get('total_sales') or 0 for r in july)
+          customers = sum(r.get('customers') or 0 for r in july)
+          days = sum(1 for r in july if (r.get('total_sales') or 0) > 0)
+          avg_daily = sales / days if days else 0
+          avg_spend = sales / customers if customers else 0
+          projection = avg_daily * 27
+
+          # 月別集計
+          for r in data.get('monthly', []):
+              if r.get('month') == '2026-07':
+                  r.update(sales=sales,customers=customers,days=days,avg_daily=avg_daily,avg_spend=avg_spend)
+
+          june_sales = next((r['sales'] for r in data.get('monthly',[]) if r.get('month')=='2026-06'),0)
+          june_customers = next((r['customers'] for r in data.get('monthly',[]) if r.get('month')=='2026-06'),0)
+          june_days = next((r['days'] for r in data.get('monthly',[]) if r.get('month')=='2026-06'),0)
+          total_sales = june_sales + sales
+          total_customers = june_customers + customers
+          total_days = june_days + days
+
+          overview = {
+            'month':'2026-07','total_sales':total_sales,'total_customers':total_customers,'total_days':total_days,
+            'month_sales':sales,'month_customers':customers,'month_days':days,'avg_daily':avg_daily,
+            'avg_spend':avg_spend,'projection':projection,'month_count':2,
+            'avg_monthly':total_sales/2,'avg_customers_per_day':total_customers/total_days if total_days else 0
+          }
+          data['overview_2026-07'] = overview
+          data['bootstrap']['overview'] = overview
+          data['bootstrap']['active_month'] = '2026-07'
+
+          all_overview = dict(overview)
+          all_overview.update(month='all',month_sales=total_sales,month_customers=total_customers,month_days=total_days,
+                              avg_daily=total_sales/total_days if total_days else 0,
+                              avg_spend=total_sales/total_customers if total_customers else 0,projection=0,
+                              avg_monthly=total_sales/2,avg_customers_per_day=total_customers/total_days if total_days else 0)
+          data['overview_all'] = all_overview
+
+          # 時間帯別：誤登録7/22の内訳を除き、7/23を加える
+          old22 = {'0:00':0,'1:00':0,'2:00':0,'11:00':0,'12:00':0,'13:00':0,'14:00':0,'15:00':0,'16:00':0,'17:00':0,
+                   '18:00':0,'19:00':0,'20:00':0,'21:00':0,'22:00':0,'23:00':0}
+          # 既存の7/22は日別集計だけが誤重複で、時間帯集計への混入有無を確定できないため、
+          # 7/23の時間帯だけ加算し、品質欄に要確認を残す。
+          add23 = {'0:00':10900,'1:00':7360,'2:00':1700,'11:00':0,'12:00':3300,'13:00':5300,'14:00':2000,'15:00':2200,
+                   '16:00':0,'17:00':2080,'18:00':14350,'19:00':13100,'20:00':7750,'21:00':34910,'22:00':28170,'23:00':24010}
+          for key in ('hourly_2026-07','hourly_all'):
+              rows = data.get(key,{}).get('rows',[])
+              for r in rows:
+                  h=r.get('hour')
+                  if h in add23:
+                      r['sales']=(r.get('sales') or 0)+add23[h]
+              denom=sum(r.get('sales') or 0 for r in rows)
+              for r in rows:
+                  r['share']=(r.get('sales') or 0)/denom if denom else 0
+
+          # 商品別に7/23分を追加（同名カテゴリは既存の主カテゴリへ統合）
+          additions = {
+            '究極の味噌ラーメン':(67,72600),'バターコーンラーメン味噌':(14,19600),'チャーシュー麺味噌':(4,5800),
+            'ネギたっぷりラーメン味噌':(1,1300),'ラーメン醤油':(14,13720),'チャーシュー麺醤油':(1,1350),
+            '辛みそラーメン（期間限定）':(1,1200),'お子様ハーフ味噌':(4,2800),'お子様ハーフ醤油':(3,1950),
+            'お子様ハーフ塩':(1,650),'キムチわかたまご':(2,300),'バター・コーン':(1,200),
+            'ねぎ・ピリ辛ねぎ':(1,200),'ライス大':(1,200),'ライス小':(1,150),'チャーハン':(1,800),
+            '餃子（1皿6個）':(9,4500),'生ビール':(15,9000),'瓶ビール':(10,7000),'冷酒':(2,1400),
+            'ジュース　コーラ':(2,600),'つばさラーメン':(1,2000)
+          }
+          def add_products(rows):
+              by={}
+              for r in rows:
+                  by.setdefault(r['name'],r)
+              for name,(qty,amt) in additions.items():
+                  if name in by:
+                      by[name]['qty']=(by[name].get('qty') or 0)+qty
+                      by[name]['sales']=(by[name].get('sales') or 0)+amt
+                  else:
+                      rows.append({'name':name,'category':'要確認','qty':qty,'sales':amt,'share':0})
+              total=sum(r.get('sales') or 0 for r in rows)
+              for r in rows:r['share']=(r.get('sales') or 0)/total if total else 0
+              rows.sort(key=lambda r:r.get('sales') or 0,reverse=True)
+          add_products(data.get('products_2026-07',[]))
+          add_products(data.get('products_all',[]))
+
+          # 表示文言
+          text = text.replace('売上は7月22日分まで','売上は7月23日分まで（7月22日は誤登録削除・原本待ち）')
+          new = json.dumps(data,ensure_ascii=False,separators=(',',':'))
+          text = text[:m.start(1)] + new + text[m.end(1):]
+          path.write_text(text,encoding='utf-8')
+
+          # 最低限の検証
+          check=json.loads(re.search(r'const EMBEDDED_DATA=(\{.*?\});\s*\n',text,re.S).group(1))
+          dates=[r['business_date'] for r in check['daily_2026-07']]
+          assert '2026-07-23' in dates
+          assert '2026-07-22' not in dates
+          assert sum(r.get('total_sales') or 0 for r in check['daily_2026-07']) == 3422310
+          assert sum(r.get('customers') or 0 for r in check['daily_2026-07']) == 2453
+          print('verified: 7/22 removed, 7/23 added, July sales=3,422,310')
+          PY
+      - name: Commit corrected dashboard
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m '7月22日誤登録を削除し7月23日155,530円を反映' || exit 0
+          git push
