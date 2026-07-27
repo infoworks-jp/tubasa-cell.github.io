@@ -44,7 +44,7 @@ async function api(url,opt){
  if(!(key in EMBEDDED_DATA))throw new Error('データ未配置: '+key);
  return JSON.parse(JSON.stringify(EMBEDDED_DATA[key]));
 }
-async function init(){const b=await api('/api/bootstrap');state.monthly=await api('/api/monthly');$('monthSelect').innerHTML=b.months.map(m=>`<option value="${m}">${ymLabel(m)}</option>`).join('');state.month=b.active_month;$('monthSelect').value=state.month;await reloadCurrent();$('updated').textContent='データ更新 2026/7/23（7月22日売上反映）'}
+async function init(){const b=await api('/api/bootstrap');state.monthly=await api('/api/monthly');$('monthSelect').innerHTML=b.months.map(m=>`<option value="${m}">${ymLabel(m)}</option>`).join('');state.month=b.active_month;$('monthSelect').value=state.month;await reloadCurrent();$('updated').textContent='データ更新 2026/7/27（7月26日売上反映）'}
 function currentScope(){return state.scope==='all'?'all':state.month}
 function scopeLabel(){return state.scope==='all'?'累計（全期間）':ymLabel(state.month)}
 function monthChanged(){state.month=$('monthSelect').value;if(state.scope!=='month')setScope('month');else reloadCurrent()}
