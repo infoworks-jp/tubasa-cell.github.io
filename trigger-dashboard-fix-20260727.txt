@@ -1,0 +1,1 @@
+Trigger existing GitHub Actions workflows to apply the verified July 22 and July 23 dashboard corrections.
