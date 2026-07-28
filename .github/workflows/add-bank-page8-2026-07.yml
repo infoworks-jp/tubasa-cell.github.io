@@ -1,0 +1,98 @@
+name: Add bank passbook page 8 sales deposits
+
+on:
+  push:
+    paths:
+      - '.github/workflows/add-bank-page8-2026-07.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add confirmed sales deposits from passbook page 8
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          m = re.search(r'const EMBEDDED_DATA=(\{.*?\});\s*\n', text, re.S)
+          if not m:
+              raise SystemExit('EMBEDDED_DATA not found')
+          data = json.loads(m.group(1))
+
+          daily = {r.get('business_date'): int(r.get('total_sales') or 0)
+                   for r in data.get('daily_2026-07', [])}
+
+          additions = [
+              {'deposit_date':'2026-07-22','sales_date':'2026-07-21','amount':122250,
+               'breakdown':'通帳8頁・手書き「7/21 売上」','source':'通帳8頁'},
+              {'deposit_date':'2026-07-23','sales_date':'2026-07-22','amount':108810,
+               'breakdown':'通帳8頁・手書き「7/22 売上」','source':'通帳8頁'},
+              {'deposit_date':'2026-07-24','sales_date':'2026-07-23','amount':155530,
+               'breakdown':'通帳8頁・手書き「7/23 売上」','source':'通帳8頁'},
+              {'deposit_date':'2026-07-27','sales_date':'2026-07-24','amount':179190,
+               'breakdown':'通帳8頁・手書き「7/24 売上」','source':'通帳8頁'},
+              {'deposit_date':'2026-07-27','sales_date':'2026-07-25','amount':214170,
+               'breakdown':'通帳8頁・手書き「7/25 売上」','source':'通帳8頁'},
+              {'deposit_date':'2026-07-27','sales_date':'2026-07-26','amount':239650,
+               'breakdown':'通帳8頁・手書き「7/26 売上」','source':'通帳8頁'},
+          ]
+
+          key = 'bank_2026-07'
+          rows = data.get(key, [])
+          existing = {(r.get('deposit_date'), r.get('sales_date')): r for r in rows}
+          for r in additions:
+              ds = daily.get(r['sales_date'])
+              r['daily_sales'] = ds if ds else None
+              if ds is None or ds == 0:
+                  r['result'] = '日別未登録'
+              elif ds == r['amount']:
+                  r['result'] = '一致'
+              else:
+                  r['result'] = f'差額 {r["amount"]-ds:+,}円'
+              existing[(r['deposit_date'], r['sales_date'])] = r
+
+          data[key] = sorted(existing.values(), key=lambda r:(r.get('deposit_date') or '', r.get('sales_date') or ''))
+
+          # 累計表示用にも重複なく反映
+          all_key = 'bank_all'
+          all_rows = data.get(all_key, [])
+          all_existing = {(r.get('deposit_date'), r.get('sales_date')): r for r in all_rows}
+          for r in additions:
+              all_existing[(r['deposit_date'], r['sales_date'])] = r
+          data[all_key] = sorted(all_existing.values(), key=lambda r:(r.get('deposit_date') or '', r.get('sales_date') or ''))
+
+          text = text.replace('通帳6・7頁の売上入金照合を反映', '通帳6〜8頁の売上入金照合を反映')
+          text = text.replace('この2ページでは入金未確認', '掲載済み通帳頁では入金未確認')
+          text = text.replace('データ更新 2026/7/27（7月26日売上反映）', 'データ更新 2026/7/28（通帳8頁反映）')
+          text = text.replace('データ更新 2026/7/23（7月22日売上反映）', 'データ更新 2026/7/28（通帳8頁反映）')
+
+          new_json = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
+          text = text[:m.start(1)] + new_json + text[m.end(1):]
+          path.write_text(text, encoding='utf-8')
+
+          check = json.loads(re.search(r'const EMBEDDED_DATA=(\{.*?\});\s*\n', text, re.S).group(1))
+          page8 = [r for r in check[key] if r.get('source') == '通帳8頁']
+          assert len(page8) == 6, len(page8)
+          assert sum(r['amount'] for r in page8) == 1019600
+          print(page8)
+          PY
+
+      - name: Commit updated dashboard
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m '通帳8頁の売上入金を7月21日〜26日に反映 [skip ci]'
+          git push
