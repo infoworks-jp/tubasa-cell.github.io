@@ -60,9 +60,13 @@ jobs:
           july22 = [r for r in july if r.get('business_date') == '2026-07-22']
           assert len(july22) == 1, f'2026-07-22 must appear exactly once, found {len(july22)}'
           target = july22[0]
-          assert to_int(target.get('total_sales', 0)) == 278000
-          assert to_int(target.get('customers', 0)) == 199
-          assert to_int(target.get('issued_count', 0)) == 293
+          # 7/22は原本から確認済みの総額・客数だけを確定値とする。
+          # 商品別、時間帯別、精算内訳は未確認のため推測入力しない。
+          assert to_int(target.get('total_sales', 0)) == 196500
+          assert to_int(target.get('customers', 0)) == 162
+          assert target.get('issued_count') is None
+          assert target.get('settlement_count') is None
+          assert target.get('settlement_amount') is None
 
           july_sales = sum(to_int(r.get('total_sales', 0)) for r in active_daily('daily_2026-07'))
           july_customers = sum(to_int(r.get('customers', 0)) for r in active_daily('daily_2026-07'))
@@ -86,8 +90,8 @@ jobs:
                   'warning: hourly_2026-07 + settlement mismatch '
                   f'(hourly={hourly_sales}, settlement={settlement}, daily={july_sales})'
               )
-          assert '売上は7月22日分まで' in text
-          assert '<!-- DATA_2026_07_22_APPLIED -->' in text
+          assert '売上は7月26日分まで' in text
+          assert '<!-- DATA_2026_07_24_26_APPLIED -->' in text
 
           print('Validation passed')
           print({'july_sales': july_sales, 'july_customers': july_customers, 'july_days': july_days,

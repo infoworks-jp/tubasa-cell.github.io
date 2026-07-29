@@ -49,10 +49,12 @@ jobs:
           if len(july22) != 1:
               raise RuntimeError(f'2026-07-22 row count must be 1, got {len(july22)}')
           row = july22[0]
-          expected = {'total_sales': 278000, 'customers': 199, 'issued_count': 293}
+          expected = {'total_sales': 196500, 'customers': 162}
           for key, value in expected.items():
               if int(row.get(key, -1)) != value:
                   raise RuntimeError(f'2026-07-22 {key} mismatch: {row.get(key)} != {value}')
+          if row.get('issued_count') is not None:
+              raise RuntimeError('2026-07-22 issued_count must remain unconfirmed')
 
           out = Path('data')
           out.mkdir(exist_ok=True)
