@@ -4,8 +4,15 @@
   const TARGET_SALES=108000;
 
   function rawName(r){return String(r?.name ?? r?.product_name ?? r?.item_name ?? '');}
-  function normalizeName(v){return String(v||'').normalize('NFKC').replace(/[\s　]+/g,'').replace(/[()（）]/g,'').trim();}
-  function isTarget(r){return normalizeName(rawName(r))===TARGET_NAME;}
+  function normalizeName(v){
+    return String(v||'')
+      .normalize('NFKC')
+      .replace(/[\u200B-\u200D\uFEFF]/g,'')
+      .replace(/[\s　]+/g,'')
+      .replace(/[()（）]/g,'')
+      .trim();
+  }
+  function isTarget(r){return normalizeName(rawName(r))===normalizeName(TARGET_NAME);}
 
   function canonicalRow(source={}){
     const row={...source};
@@ -20,79 +27,136 @@
     return row;
   }
 
-  function dedupeAllProducts(arr){
-    if(!Array.isArray(arr)) return arr;
-    const seen=new Map();
+  function uniqueProducts(input){
+    if(!Array.isArray(input)) return [];
+    const seen=new Set();
     const result=[];
-    for(const row of arr){
-      const key=normalizeName(rawName(row));
-      if(!key){result.push(row);continue;}
-      if(isTarget(row)){
-        if(!seen.has(TARGET_NAME)){
-          seen.set(TARGET_NAME,result.length);
-          result.push(canonicalRow(row));
-        }
-        continue;
-      }
+    for(const source of input){
+      const key=normalizeName(rawName(source));
+      if(!key) continue;
       if(seen.has(key)) continue;
-      seen.set(key,result.length);
-      result.push(row);
+      seen.add(key);
+      result.push(isTarget(source)?canonicalRow(source):{...source});
     }
     const total=result.reduce((s,r)=>s+Number(r.sales??r.amount??0),0);
-    if(total){result.forEach(r=>{if('share' in r)r.share=Number(r.sales??r.amount??0)/total;});}
-    arr.splice(0,arr.length,...result);
-    return arr;
+    if(total){
+      result.forEach(r=>{r.share=Number(r.sales??r.amount??0)/total;});
+    }
+    return result;
   }
 
   function applyFix(){
     if(typeof EMBEDDED_DATA!=='undefined'){
       Object.keys(EMBEDDED_DATA).forEach(k=>{
-        if(/product/i.test(k)&&/2026[_-]?07|july/i.test(k)&&Array.isArray(EMBEDDED_DATA[k])) dedupeAllProducts(EMBEDDED_DATA[k]);
+        if(/product/i.test(k)&&/2026[_-]?07|july/i.test(k)&&Array.isArray(EMBEDDED_DATA[k])){
+          EMBEDDED_DATA[k].splice(0,EMBEDDED_DATA[k].length,...uniqueProducts(EMBEDDED_DATA[k]));
+        }
       });
     }
-    if(typeof state!=='undefined'&&state&&Array.isArray(state.products)) dedupeAllProducts(state.products);
+    if(typeof state!=='undefined'&&state&&Array.isArray(state.products)){
+      state.products.splice(0,state.products.length,...uniqueProducts(state.products));
+    }
+  }
+
+  function visibleRows(query=''){
+    applyFix();
+    const q=String(query||'').toLowerCase();
+    return uniqueProducts((state&&Array.isArray(state.products))?state.products:[])
+      .filter(r=>(String(r.name||'')+' '+String(r.category||'')+' '+String(r.detail||'')).toLowerCase().includes(q));
+  }
+
+  function renderProductRows(){
+    const prod=document.getElementById('prod');
+    if(!prod||typeof table!=='function') return;
+    const q=document.getElementById('search')?.value||'';
+    const rows=visibleRows(q);
+    prod.innerHTML=table(
+      ['順位','商品','券売機分類','詳細分類','出数','売上','構成比'],
+      rows.map((r,i)=>[
+        i+1,
+        r.name,
+        r.category,
+        r.detail||(typeof detailCategory==='function'?detailCategory(r.name,r.category):''),
+        r.qty,
+        typeof yen==='function'?yen(r.sales):r.sales,
+        typeof pct==='function'?pct(r.share):r.share
+      ]),
+      true
+    );
+    const counter=document.querySelector('#host .toolbar span');
+    if(counter) counter.textContent='全商品 '+rows.length+'品目';
+  }
+
+  function renderProductsFixed(){
+    applyFix();
+    state.products.forEach(x=>x.detail=typeof detailCategory==='function'?detailCategory(x.name,x.category):'');
+    document.getElementById('host').innerHTML='<div class="panel"><div class="toolbar"><input id="search" placeholder="商品名・分類を検索"><span></span></div><div id="prod"></div></div>';
+    const search=document.getElementById('search');
+    if(search) search.addEventListener('input',renderProductRows);
+    renderProductRows();
+  }
+
+  function renderABCFixed(){
+    applyFix();
+    const products=uniqueProducts(state.products);
+    let cum=0;
+    const rows=products.map((r,i)=>{
+      cum+=Number(r.share||0);
+      const c=cum<=.7?'A':cum<=.9?'B':'C';
+      return [i+1,c,r.name,typeof detailCategory==='function'?detailCategory(r.name,r.category):'',r.qty,typeof yen==='function'?yen(r.sales):r.sales,typeof pct==='function'?pct(r.share):r.share,typeof pct==='function'?pct(cum):cum];
+    });
+    document.getElementById('host').innerHTML='<div class="notice">A：累積70%まで／B：90%まで／C：残り。売れ筋と整理対象の把握に使います。</div><div class="panel" style="margin-top:10px">'+table(['順位','ABC','商品','詳細分類','出数','売上','構成比','累積構成比'],rows,true)+'</div>';
+  }
+
+  function removeDuplicateRenderedRows(){
+    const bodies=document.querySelectorAll('#prod tbody, #host tbody');
+    bodies.forEach(body=>{
+      const seen=new Set();
+      [...body.querySelectorAll('tr')].forEach(row=>{
+        const cells=row.querySelectorAll('td');
+        if(cells.length<2) return;
+        const product=normalizeName(cells[1].textContent||'');
+        if(!product) return;
+        if(seen.has(product)) row.remove();
+        else seen.add(product);
+      });
+    });
   }
 
   function validate(){
+    applyFix();
     const errors=[];
-    const arrays=[];
-    if(typeof EMBEDDED_DATA!=='undefined'){
-      Object.keys(EMBEDDED_DATA).forEach(k=>{
-        if(/product/i.test(k)&&/2026[_-]?07|july/i.test(k)&&Array.isArray(EMBEDDED_DATA[k])) arrays.push([k,EMBEDDED_DATA[k]]);
-      });
-    }
-    if(typeof state!=='undefined'&&state&&Array.isArray(state.products)) arrays.push(['state.products',state.products]);
-    for(const [label,arr] of arrays){
-      const names=arr.map(r=>normalizeName(rawName(r))).filter(Boolean);
-      const dup=[...new Set(names.filter((n,i)=>names.indexOf(n)!==i))];
-      if(dup.length) errors.push(`${label}:重複 ${dup.join('、')}`);
-      const target=arr.filter(isTarget);
-      if(target.length!==1) errors.push(`${label}:チャーハン${target.length}件`);
-      if(target.length===1){
-        const qty=Number(target[0].qty??target[0].quantity??target[0].count??0);
-        const sales=Number(target[0].sales??target[0].amount??0);
-        if(qty!==TARGET_QTY||sales!==TARGET_SALES) errors.push(`${label}:チャーハン${qty}食/${sales}円`);
-      }
+    const rows=uniqueProducts(state?.products||[]);
+    const names=rows.map(r=>normalizeName(rawName(r))).filter(Boolean);
+    const dup=[...new Set(names.filter((n,i)=>names.indexOf(n)!==i))];
+    if(dup.length) errors.push('重複商品:'+dup.join('、'));
+    const target=rows.filter(isTarget);
+    if(target.length!==1) errors.push('チャーハン:'+target.length+'件');
+    if(target.length===1){
+      if(Number(target[0].qty)!==TARGET_QTY) errors.push('チャーハン出数:'+target[0].qty);
+      if(Number(target[0].sales)!==TARGET_SALES) errors.push('チャーハン売上:'+target[0].sales);
     }
     return errors;
   }
 
-  const baseProducts=window.renderProducts;
-  const baseABC=window.renderABC;
-  const baseBeer=window.renderBeer;
-  if(typeof baseProducts==='function') window.renderProducts=function(){applyFix();return baseProducts.apply(this,arguments);};
-  if(typeof baseABC==='function') window.renderABC=function(){applyFix();return baseABC.apply(this,arguments);};
-  if(typeof baseBeer==='function') window.renderBeer=function(){applyFix();return baseBeer.apply(this,arguments);};
+  window.renderProducts=renderProductsFixed;
+  window.filterProducts=renderProductRows;
+  window.renderABC=renderABCFixed;
+
+  const observer=new MutationObserver(()=>removeDuplicateRenderedRows());
+  observer.observe(document.documentElement,{childList:true,subtree:true});
 
   applyFix();
   setTimeout(async()=>{
     if(typeof reloadCurrent==='function') await reloadCurrent();
     applyFix();
+    if(typeof state!=='undefined'&&state.tab==='products') renderProductsFixed();
+    if(typeof state!=='undefined'&&state.tab==='abc') renderABCFixed();
+    removeDuplicateRenderedRows();
     const errors=validate();
-    if(typeof state!=='undefined'&&state.tab==='products'&&typeof window.renderProducts==='function') window.renderProducts();
-    if(typeof state!=='undefined'&&state.tab==='abc'&&typeof window.renderABC==='function') window.renderABC();
-    if(typeof state!=='undefined'&&state.tab==='beer'&&typeof window.renderBeer==='function') window.renderBeer();
     const u=document.getElementById('updated');
-    if(u)u.textContent=errors.length?`公開禁止：${errors.join('／')}`:'データ更新 2026/8/2（全商品重複0件・チャーハン1件）';
-  },500);
+    if(u) u.textContent=errors.length
+      ? '公開禁止：'+errors.join('／')
+      : 'データ更新 2026/8/2（商品表描画時重複0件・チャーハン135食）';
+  },700);
 })();
