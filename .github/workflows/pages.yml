@@ -44,18 +44,20 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          # ダッシュボードの経費ボタンと人件費パッチ
           p = Path('_site/index.html')
           text = p.read_text(encoding='utf-8')
           old = '<button id="t_expenses" onclick="showTab(\'expenses\')">仕入・外注・経費</button>'
           new = '<button id="t_expenses" onclick="location.href=\'./expenses.html\'">仕入・外注・経費 ↗</button>'
           if old in text:
               text = text.replace(old, new, 1)
-          patch = '<script src="./assets/labor-cost-patch.js"></script>'
-          if patch not in text:
-              text = text.replace('</body>', patch + '</body>', 1)
 
-          # 通帳のカタカナ印字・手書きメモを正式名称へ統一
+          patch1 = '<script src="./assets/labor-cost-patch.js"></script>'
+          patch2 = '<script src="./assets/consulting-july-fix.js"></script>'
+          if patch1 not in text:
+              text = text.replace('</body>', patch1 + '</body>', 1)
+          if patch2 not in text:
+              text = text.replace('</body>', patch2 + '</body>', 1)
+
           replacements = {
               'ゼイリシクミアイ': '岡税理士事務所',
               'カ）イマイ': '株式会社イマイ',
@@ -72,13 +74,11 @@ jobs:
               text = text.replace(src, dst)
           p.write_text(text, encoding='utf-8')
 
-          # 経費ページへ通帳照合結果を反映
           ep = Path('_site/expenses.html')
           if ep.exists():
               e = ep.read_text(encoding='utf-8')
               for src, dst in replacements.items():
                   e = e.replace(src, dst)
-
               e = e.replace(
                   '<tr><td>社労士顧問料</td><td>2026年6月</td><td class="num">¥20,000</td><td class="num">¥2,000</td><td class="num">¥22,000</td><td>専門家報酬</td><td>2026年6月</td><td>2026年8月予定</td></tr>',
                   '<tr><td>MAST社会保険労務士法人</td><td>2026年6月</td><td class="num">¥20,000</td><td class="num">¥2,000</td><td class="num">¥22,000</td><td>社労士顧問料（基本定額）</td><td>2026年6月</td><td>2026年6月22日</td></tr>'
@@ -91,7 +91,6 @@ jobs:
                   '<tr><td>2026年8月予定</td><td class="num">¥22,000</td><td>社労士顧問料</td></tr>',
                   '<tr><td>2026年6月</td><td class="num">¥22,000</td><td>MAST社会保険労務士法人・基本定額</td></tr>'
               )
-
               bankbook_section = '''
           <section class="panel"><div class="section-title"><h2>通帳印字・手書きメモの正式名称</h2><span class="mini">通帳画像1〜7ページの確認内容</span></div>
           <div class="scroll"><table><thead><tr><th>通帳上の表記</th><th>サイト表示</th><th>分類・取扱い</th></tr></thead><tbody>
@@ -113,9 +112,10 @@ jobs:
           touch _site/.nojekyll
       - name: Verify required files
         run: |
-          test -f _site/index.html        || (echo "ERROR: _site/index.html missing" && exit 1)
+          test -f _site/index.html || (echo "ERROR: _site/index.html missing" && exit 1)
           test -f _site/manual/index.html || (echo "ERROR: _site/manual/index.html missing" && exit 1)
-          echo "OK: index.html and manual/index.html are present"
+          test -f _site/assets/consulting-july-fix.js || (echo "ERROR: consulting patch missing" && exit 1)
+          echo "OK: required files are present"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
