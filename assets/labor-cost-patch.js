@@ -50,8 +50,67 @@
 
   const SOCIAL_INSURANCE={'2026-06':314440};
   function insuranceFor(month){return Number(SOCIAL_INSURANCE[month]||0)}
-  async function correctedPayroll(){let d=await api('/api/payroll');if(state.scope==='month')d=d.filter(x=>x.year_month===state.month);if(!d.length){$('host').innerHTML='<div class="notice"><b>この月の人件費は未確定です。</b> 現在公開できる確定値は2026年6月分だけです。</div>';return}const r=d[0],social=insuranceFor(r.year_month),totalLabor=Number(r.salary_paid||0)+social,totalRate=Number(r.monthly_sales||0)?totalLabor/Number(r.monthly_sales):0,salesMinusTotalLabor=Number(r.monthly_sales||0)-totalLabor;$('host').innerHTML=`<div class="notice ok" style="margin-bottom:12px"><b>${ymLabel(r.year_month)}確定分・店舗全体の集計のみ公開</b></div><div class="cards"><div class="card"><div class="label">社員 支給総額</div><div class="big">${yen(r.employee_gross)}</div></div><div class="card"><div class="label">アルバイト 支給総額</div><div class="big">${yen(r.parttime_gross)}</div></div><div class="card"><div class="label">給与支給総額</div><div class="big">${yen(r.salary_paid)}</div></div><div class="card"><div class="label">社会保険料</div><div class="big">${yen(social)}</div></div><div class="card"><div class="label">社会保険込み総人件費</div><div class="big">${yen(totalLabor)}</div></div><div class="card"><div class="label">総人件費率</div><div class="big">${pct(totalRate)}</div></div><div class="card"><div class="label">売上－総人件費</div><div class="big">${yen(salesMinusTotalLabor)}</div></div></div>`;}
-  function correctedConsulting(){renderConsultingBase();}
-  window.renderPayroll=correctedPayroll;window.renderConsulting=correctedConsulting;
-  setTimeout(async()=>{patchData();if(typeof reloadCurrent==='function')await reloadCurrent();const u=document.getElementById('updated');if(u)u.textContent='データ更新 2026/8/1（7月月間集計票で検算一致）';},0);
+
+  async function correctedPayroll(){
+    let d=await api('/api/payroll');
+    if(state.scope==='month')d=d.filter(x=>x.year_month===state.month);
+    if(!d.length){$('host').innerHTML='<div class="notice"><b>この月の人件費は未確定です。</b> 現在公開できる確定値は2026年6月分だけです。</div>';return}
+    const r=d[0],social=insuranceFor(r.year_month),totalLabor=Number(r.salary_paid||0)+social,totalRate=Number(r.monthly_sales||0)?totalLabor/Number(r.monthly_sales):0,salesMinusTotalLabor=Number(r.monthly_sales||0)-totalLabor;
+    $('host').innerHTML=`<div class="notice ok" style="margin-bottom:12px"><b>${ymLabel(r.year_month)}確定分・店舗全体の集計のみ公開</b></div><div class="cards"><div class="card"><div class="label">社員 支給総額</div><div class="big">${yen(r.employee_gross)}</div></div><div class="card"><div class="label">アルバイト 支給総額</div><div class="big">${yen(r.parttime_gross)}</div></div><div class="card"><div class="label">給与支給総額</div><div class="big">${yen(r.salary_paid)}</div></div><div class="card"><div class="label">社会保険料</div><div class="big">${yen(social)}</div></div><div class="card"><div class="label">社会保険込み総人件費</div><div class="big">${yen(totalLabor)}</div></div><div class="card"><div class="label">総人件費率</div><div class="big">${pct(totalRate)}</div></div><div class="card"><div class="label">売上－総人件費</div><div class="big">${yen(salesMinusTotalLabor)}</div></div></div>`;
+  }
+
+  function correctedConsulting(){
+    const july=EMBEDDED_DATA.overview_2026_07;
+    const june=(EMBEDDED_DATA.monthly||[]).find(r=>r.month==='2026-06')||{};
+    const diff=Number(july.month_sales||0)-Number(june.sales||0);
+    const diffRate=Number(june.sales||0)?diff/Number(june.sales):0;
+    const last4=(EMBEDDED_DATA.daily_2026_07||[]).filter(r=>['2026-07-28','2026-07-29','2026-07-30','2026-07-31'].includes(r.business_date));
+    const last4Sales=last4.reduce((s,r)=>s+Number(r.total_sales||0),0);
+    const best=(EMBEDDED_DATA.daily_2026_07||[]).filter(r=>Number(r.total_sales||0)>0).sort((a,b)=>Number(b.total_sales)-Number(a.total_sales))[0];
+
+    $('host').innerHTML=`
+      <div class="notice ok" style="margin-bottom:12px"><b>2026年7月 売上確定版</b>　月間ジャーナル、日別積上げ、通帳入金を照合し、総売上と入店数は一致しています。</div>
+      <div class="cards">
+        <div class="card"><div class="label">7月確定売上</div><div class="big">${yen(july.month_sales)}</div><div class="sub">月間集計票と一致</div></div>
+        <div class="card"><div class="label">入店数</div><div class="big">${Number(july.month_customers).toLocaleString()}人</div><div class="sub">月間集計票と一致</div></div>
+        <div class="card"><div class="label">平均客単価</div><div class="big">${yen(july.avg_spend)}</div><div class="sub">売上÷入店数</div></div>
+        <div class="card"><div class="label">平均日商</div><div class="big">${yen(july.avg_daily)}</div><div class="sub">${july.month_days}営業日</div></div>
+        <div class="card"><div class="label">6月比</div><div class="big ${diff>=0?'up':'down'}">${diff>=0?'+':''}${yen(diff)}</div><div class="sub">${(diffRate*100).toFixed(1)}%</div></div>
+        <div class="card"><div class="label">月末4日売上</div><div class="big">${yen(last4Sales)}</div><div class="sub">7/28〜7/31</div></div>
+      </div>
+
+      <div class="panel" style="margin-top:12px">
+        <h3>7月経営総括</h3>
+        <div class="insight"><b>総合判断：売上面は安定、月末に持ち直し。</b><br>7月の確定売上は${yen(july.month_sales)}、入店数は${Number(july.month_customers).toLocaleString()}人、平均客単価は${yen(july.avg_spend)}です。6月比では${yen(Math.abs(diff))}の${diff>=0?'増加':'減少'}でした。</div>
+        <div class="insight"><b>月末4日間は${yen(last4Sales)}。</b><br>7月31日は${yen(best.total_sales)}で月内最高、客単価も${yen(best.avg_spend)}でした。高単価商品の比率や飲料・セット販売が伸びた可能性があるため、商品別確定集計で確認します。</div>
+        <div class="insight"><b>データ精度は大きく改善。</b><br>7月22日の重複・日付ずれを修正し、月間ジャーナルの売上${yen(4917050)}、入店数3,525人と完全一致しました。通帳9頁までの売上入金も反映済みです。</div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px">
+        <div class="panel"><h3>良かった点</h3>
+          <div class="insight">月間売上、入店数、客単価の基準値が確定した。</div>
+          <div class="insight">月末に20万円台の日商を確保できた。</div>
+          <div class="insight">通帳と券売機の照合精度が上がり、未確認箇所が明確になった。</div>
+        </div>
+        <div class="panel"><h3>未確定・注意点</h3>
+          <div class="notice"><b>7月給与と社会保険料が未確定です。</b><br>そのため、人件費率、営業利益、損益分岐点、最終評価はまだ確定しません。</div>
+          <div class="insight">7月21日売上の券売機日別原本は未登録のため、通帳入金122,250円を候補として保留しています。</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:12px"><h3>8月の実行項目</h3>
+        ${table(['優先','実行項目','確認指標'],[
+          ['1','7月給与・社会保険料を反映し、最終損益を確定','総人件費率・営業利益'],
+          ['2','ビール・餃子セットの販売効果を商品別で確認','販売数・売上・客単価'],
+          ['3','日商20万円超の日の時間帯構成を比較','21〜23時売上・深夜売上'],
+          ['4','月間ジャーナルを毎月の最終基準にする','日別・商品別・入店数の一致']
+        ])}
+      </div>
+
+      <div class="notice" style="margin-top:12px"><b>現在の評価は「売上確定版」です。</b> 7月給与・社会保険・仕入・固定費が揃った時点で、利益を含む「7月経営コンサル完成版」へ更新します。</div>`;
+  }
+
+  window.renderPayroll=correctedPayroll;
+  window.renderConsulting=correctedConsulting;
+  setTimeout(async()=>{patchData();if(typeof reloadCurrent==='function')await reloadCurrent();const u=document.getElementById('updated');if(u)u.textContent='データ更新 2026/8/1（7月売上確定・経営コンサル更新）';},0);
 })();
