@@ -33,82 +33,29 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Prepare static site
+      - name: Prepare clean static site
         run: |
           rm -rf _site
           mkdir _site
-          find . -maxdepth 1 -type f \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.json' -o -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' -o -name '*.svg' -o -name '*.ico' \) -exec cp {} _site/ \;
-          if [ -d assets ]; then cp -R assets _site/assets; fi
+          cp index-rebuilt.html _site/index.html
+          cp index-rebuilt.html _site/index-rebuilt.html
+          if [ -f monthly-check.html ]; then cp monthly-check.html _site/monthly-check.html; fi
+          if [ -f admin-audit.html ]; then cp admin-audit.html _site/admin-audit.html; fi
           if [ -d manual ]; then cp -R manual _site/manual; fi
           if [ -d docs ]; then cp -R docs _site/docs; fi
-          python - <<'PY'
-          from pathlib import Path
-
-          p = Path('_site/index.html')
-          text = p.read_text(encoding='utf-8')
-          old = '<button id="t_expenses" onclick="showTab(\'expenses\')">仕入・外注・経費</button>'
-          new = '<button id="t_expenses" onclick="location.href=\'./expenses.html\'">仕入・外注・経費 ↗</button>'
-          if old in text:
-              text = text.replace(old, new, 1)
-
-          scripts = [
-              '<script src="./assets/labor-cost-patch.js"></script>',
-              '<script src="./assets/consulting-july-fix.js"></script>',
-              '<script src="./assets/validation-fix.js"></script>',
-              '<script src="./assets/daily-display-fix.js"></script>',
-              '<script src="./assets/product-july-fix.js"></script>',
-              '<script src="./assets/monthly-cutoff-fix.js"></script>',
-              '<script src="./assets/admin-stabilization.js"></script>',
-          ]
-          for script in scripts:
-              if script not in text:
-                  text = text.replace('</body>', script + '</body>', 1)
-
-          replacements = {
-              'ゼイリシクミアイ': '岡税理士事務所',
-              'カ）イマイ': '株式会社イマイ',
-              'カ)イマイ': '株式会社イマイ',
-              'オオクマショウテン': '大熊商店',
-              'オオワクショウテン': '大熊商店',
-              'ノウユウ': '農友（豚肉・その他食材）',
-              'NSSシャロウシ': 'MAST社会保険労務士法人',
-              'NSS.シャロウシ': 'MAST社会保険労務士法人',
-              'イモンホームズ': 'イモンホームズ（駐車場賃貸）',
-              'ケイヒ': '現金経費',
-          }
-          for src, dst in replacements.items():
-              text = text.replace(src, dst)
-          p.write_text(text, encoding='utf-8')
-
-          ep = Path('_site/expenses.html')
-          if ep.exists():
-              e = ep.read_text(encoding='utf-8')
-              for src, dst in replacements.items():
-                  e = e.replace(src, dst)
-              ep.write_text(e, encoding='utf-8')
-          PY
           touch _site/.nojekyll
-      - name: Verify required files and constants
+      - name: Verify rebuilt dashboard
         run: |
-          test -f _site/index.html || (echo "ERROR: index missing" && exit 1)
-          test -f _site/admin-audit.html || (echo "ERROR: admin audit page missing" && exit 1)
-          test -f _site/manual/index.html || (echo "ERROR: manual missing" && exit 1)
-          test -f _site/assets/labor-cost-patch.js || (echo "ERROR: labor patch missing" && exit 1)
-          test -f _site/assets/consulting-july-fix.js || (echo "ERROR: consulting patch missing" && exit 1)
-          test -f _site/assets/validation-fix.js || (echo "ERROR: validation patch missing" && exit 1)
-          test -f _site/assets/daily-display-fix.js || (echo "ERROR: daily display patch missing" && exit 1)
-          test -f _site/assets/product-july-fix.js || (echo "ERROR: July product patch missing" && exit 1)
-          test -f _site/assets/monthly-cutoff-fix.js || (echo "ERROR: monthly cutoff patch missing" && exit 1)
-          test -f _site/assets/admin-stabilization.js || (echo "ERROR: admin stabilization missing" && exit 1)
-          grep -q './assets/admin-stabilization.js' _site/index.html || (echo "ERROR: admin stabilization not linked" && exit 1)
-          grep -q 'FRIED_RICE.qty' _site/assets/admin-stabilization.js || (echo "ERROR: fried rice canonical rule missing" && exit 1)
-          grep -q '4917050' _site/assets/admin-stabilization.js || (echo "ERROR: July confirmed sales missing" && exit 1)
-          grep -q '4995250' _site/assets/admin-stabilization.js || (echo "ERROR: June provisional sales missing" && exit 1)
-          grep -q 'issued: 5048' _site/assets/admin-stabilization.js || (echo "ERROR: July issued count missing" && exit 1)
-          grep -q 'settlement: -53' _site/assets/admin-stabilization.js || (echo "ERROR: July settlement count missing" && exit 1)
-          grep -q 'net: 4995' _site/assets/admin-stabilization.js || (echo "ERROR: July net count missing" && exit 1)
-          grep -q '32,690円・60人' _site/admin-audit.html || (echo "ERROR: unresolved July difference missing" && exit 1)
-          echo "OK: administrator stabilization and audit status are deployed"
+          test -f _site/index.html || (echo "ERROR: rebuilt index missing" && exit 1)
+          grep -q "const JULY={month:'2026-07',sales:4917050,customers:3525,issued:5048,settlement:-53,net:4995,days:27}" _site/index.html || (echo "ERROR: July monthly constants incorrect" && exit 1)
+          grep -q "\['チャーハン',800,135,0,108000\]" _site/index.html || (echo "ERROR: fried rice source row incorrect" && exit 1)
+          grep -q "全40品目" _site/index.html || (echo "ERROR: product count label missing" && exit 1)
+          grep -q "商品名重複" _site/index.html || (echo "ERROR: duplicate QA missing" && exit 1)
+          grep -q "2026-07-31" _site/index.html || (echo "ERROR: verified July 31 data missing" && exit 1)
+          if grep -q "labor-cost-patch.js\|consulting-july-fix.js\|validation-fix.js\|daily-display-fix.js\|product-july-fix.js\|admin-stabilization.js" _site/index.html; then
+            echo "ERROR: old patch scripts must not be loaded" && exit 1
+          fi
+          echo "OK: rebuilt July source passes deployment checks"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
