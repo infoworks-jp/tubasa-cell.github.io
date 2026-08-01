@@ -51,12 +51,14 @@ jobs:
           if old in text:
               text = text.replace(old, new, 1)
 
-          patch1 = '<script src="./assets/labor-cost-patch.js"></script>'
-          patch2 = '<script src="./assets/consulting-july-fix.js"></script>'
-          if patch1 not in text:
-              text = text.replace('</body>', patch1 + '</body>', 1)
-          if patch2 not in text:
-              text = text.replace('</body>', patch2 + '</body>', 1)
+          scripts = [
+              '<script src="./assets/labor-cost-patch.js"></script>',
+              '<script src="./assets/consulting-july-fix.js"></script>',
+              '<script src="./assets/validation-fix.js"></script>',
+          ]
+          for script in scripts:
+              if script not in text:
+                  text = text.replace('</body>', script + '</body>', 1)
 
           replacements = {
               'ゼイリシクミアイ': '岡税理士事務所',
@@ -79,43 +81,22 @@ jobs:
               e = ep.read_text(encoding='utf-8')
               for src, dst in replacements.items():
                   e = e.replace(src, dst)
-              e = e.replace(
-                  '<tr><td>社労士顧問料</td><td>2026年6月</td><td class="num">¥20,000</td><td class="num">¥2,000</td><td class="num">¥22,000</td><td>専門家報酬</td><td>2026年6月</td><td>2026年8月予定</td></tr>',
-                  '<tr><td>MAST社会保険労務士法人</td><td>2026年6月</td><td class="num">¥20,000</td><td class="num">¥2,000</td><td class="num">¥22,000</td><td>社労士顧問料（基本定額）</td><td>2026年6月</td><td>2026年6月22日</td></tr>'
-              )
-              e = e.replace(
-                  '<tr><td>社労士顧問料</td><td>6月顧問契約</td><td class="num">¥22,000</td><td>2026年6月</td><td>2026/8/22予定</td></tr>',
-                  '<tr><td>MAST社会保険労務士法人</td><td>社労士顧問料（基本定額）</td><td class="num">¥22,000</td><td>2026年6月</td><td>2026/6/22引落確認</td></tr>'
-              )
-              e = e.replace(
-                  '<tr><td>2026年8月予定</td><td class="num">¥22,000</td><td>社労士顧問料</td></tr>',
-                  '<tr><td>2026年6月</td><td class="num">¥22,000</td><td>MAST社会保険労務士法人・基本定額</td></tr>'
-              )
-              bankbook_section = '''
-          <section class="panel"><div class="section-title"><h2>通帳印字・手書きメモの正式名称</h2><span class="mini">通帳画像1〜7ページの確認内容</span></div>
-          <div class="scroll"><table><thead><tr><th>通帳上の表記</th><th>サイト表示</th><th>分類・取扱い</th></tr></thead><tbody>
-          <tr><td>ゼイリシクミアイ</td><td>岡税理士事務所</td><td>税理士報酬（基本定額）／7月3日引落も同じ取引先</td></tr>
-          <tr><td>カ）イマイ</td><td>株式会社イマイ</td><td>ビール・酒類・飲料仕入</td></tr>
-          <tr><td>オオクマショウテン</td><td>大熊商店</td><td>食材仕入</td></tr>
-          <tr><td>ノウユウ</td><td>農友</td><td>豚肉・その他食材仕入</td></tr>
-          <tr><td>NSSシャロウシ</td><td>MAST社会保険労務士法人</td><td>社労士顧問料・基本定額引落</td></tr>
-          <tr><td>イモンホームズ</td><td>イモンホームズ</td><td>駐車場賃貸料</td></tr>
-          <tr><td>ケイヒ</td><td>現金経費</td><td>現金引出しによる経費</td></tr>
-          <tr><td>社長</td><td>社長領収書精算</td><td>領収書に基づく経費決済</td></tr>
-          <tr><td>不足／不足分</td><td>売上不足補填</td><td>売上入金の不足補填</td></tr>
-          </tbody></table></div></section>
-          '''
-              if '通帳印字・手書きメモの正式名称' not in e:
-                  e = e.replace('</main>', bankbook_section + '</main>')
               ep.write_text(e, encoding='utf-8')
           PY
           touch _site/.nojekyll
-      - name: Verify required files
+      - name: Verify required files and constants
         run: |
-          test -f _site/index.html || (echo "ERROR: _site/index.html missing" && exit 1)
-          test -f _site/manual/index.html || (echo "ERROR: _site/manual/index.html missing" && exit 1)
+          test -f _site/index.html || (echo "ERROR: index missing" && exit 1)
+          test -f _site/manual/index.html || (echo "ERROR: manual missing" && exit 1)
+          test -f _site/assets/labor-cost-patch.js || (echo "ERROR: labor patch missing" && exit 1)
           test -f _site/assets/consulting-july-fix.js || (echo "ERROR: consulting patch missing" && exit 1)
-          echo "OK: required files are present"
+          test -f _site/assets/validation-fix.js || (echo "ERROR: validation patch missing" && exit 1)
+          grep -q './assets/validation-fix.js' _site/index.html || (echo "ERROR: validation patch not linked" && exit 1)
+          grep -q '4917050' _site/assets/validation-fix.js || (echo "ERROR: July confirmed sales missing" && exit 1)
+          grep -q '4995250' _site/assets/validation-fix.js || (echo "ERROR: June confirmed sales missing" && exit 1)
+          grep -q '196500' _site/assets/validation-fix.js || (echo "ERROR: July 22 confirmed sales missing" && exit 1)
+          grep -q '163810' _site/assets/validation-fix.js || (echo "ERROR: July 22 bank deposits missing" && exit 1)
+          echo "OK: 10-check validation patch is deployed"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
