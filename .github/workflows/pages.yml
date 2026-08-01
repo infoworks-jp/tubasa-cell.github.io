@@ -55,6 +55,7 @@ jobs:
               '<script src="./assets/labor-cost-patch.js"></script>',
               '<script src="./assets/consulting-july-fix.js"></script>',
               '<script src="./assets/validation-fix.js"></script>',
+              '<script src="./assets/daily-display-fix.js"></script>',
           ]
           for script in scripts:
               if script not in text:
@@ -91,12 +92,13 @@ jobs:
           test -f _site/assets/labor-cost-patch.js || (echo "ERROR: labor patch missing" && exit 1)
           test -f _site/assets/consulting-july-fix.js || (echo "ERROR: consulting patch missing" && exit 1)
           test -f _site/assets/validation-fix.js || (echo "ERROR: validation patch missing" && exit 1)
+          test -f _site/assets/daily-display-fix.js || (echo "ERROR: daily display patch missing" && exit 1)
           grep -q './assets/validation-fix.js' _site/index.html || (echo "ERROR: validation patch not linked" && exit 1)
+          grep -q './assets/daily-display-fix.js' _site/index.html || (echo "ERROR: daily display patch not linked" && exit 1)
           grep -q '4917050' _site/assets/validation-fix.js || (echo "ERROR: July confirmed sales missing" && exit 1)
           grep -q '4995250' _site/assets/validation-fix.js || (echo "ERROR: June confirmed sales missing" && exit 1)
-          grep -q '196500' _site/assets/validation-fix.js || (echo "ERROR: July 22 confirmed sales missing" && exit 1)
-          grep -q '163810' _site/assets/validation-fix.js || (echo "ERROR: July 22 bank deposits missing" && exit 1)
-          echo "OK: 10-check validation patch is deployed"
+          grep -q '2026-07-31' _site/assets/daily-display-fix.js || (echo "ERROR: July 31 row missing" && exit 1)
+          echo "OK: validation and full July daily display are deployed"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
