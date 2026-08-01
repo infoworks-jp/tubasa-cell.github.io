@@ -57,6 +57,7 @@ jobs:
               '<script src="./assets/validation-fix.js"></script>',
               '<script src="./assets/daily-display-fix.js"></script>',
               '<script src="./assets/product-july-fix.js"></script>',
+              '<script src="./assets/monthly-cutoff-fix.js"></script>',
           ]
           for script in scripts:
               if script not in text:
@@ -95,11 +96,16 @@ jobs:
           test -f _site/assets/validation-fix.js || (echo "ERROR: validation patch missing" && exit 1)
           test -f _site/assets/daily-display-fix.js || (echo "ERROR: daily display patch missing" && exit 1)
           test -f _site/assets/product-july-fix.js || (echo "ERROR: July product patch missing" && exit 1)
+          test -f _site/assets/monthly-cutoff-fix.js || (echo "ERROR: monthly cutoff patch missing" && exit 1)
           grep -q './assets/product-july-fix.js' _site/index.html || (echo "ERROR: July product patch not linked" && exit 1)
-          grep -q 'TARGET_QTY = 135' _site/assets/product-july-fix.js || (echo "ERROR: fried rice quantity incorrect" && exit 1)
-          grep -q 'TARGET_SALES = 108000' _site/assets/product-july-fix.js || (echo "ERROR: fried rice sales incorrect" && exit 1)
+          grep -q './assets/monthly-cutoff-fix.js' _site/index.html || (echo "ERROR: monthly cutoff patch not linked" && exit 1)
+          grep -q 'TARGET_QTY=135' _site/assets/product-july-fix.js || (echo "ERROR: fried rice quantity incorrect" && exit 1)
+          grep -q 'TARGET_SALES=108000' _site/assets/product-july-fix.js || (echo "ERROR: fried rice sales incorrect" && exit 1)
+          grep -q 'issued_count: 5048' _site/assets/monthly-cutoff-fix.js || (echo "ERROR: issued count incorrect" && exit 1)
+          grep -q 'settlement_count: -53' _site/assets/monthly-cutoff-fix.js || (echo "ERROR: settlement count incorrect" && exit 1)
+          grep -q 'net_count: 4995' _site/assets/monthly-cutoff-fix.js || (echo "ERROR: net count incorrect" && exit 1)
           grep -q '2026-07-31' _site/assets/daily-display-fix.js || (echo "ERROR: July 31 row missing" && exit 1)
-          echo "OK: July daily and product fixes are deployed"
+          echo "OK: July product, daily, and monthly cutoff values are deployed"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
