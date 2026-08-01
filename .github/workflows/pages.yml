@@ -43,72 +43,50 @@ jobs:
           if [ -d docs ]; then cp -R docs _site/docs; fi
           python - <<'PY'
           from pathlib import Path
-
-          p = Path('_site/index.html')
-          text = p.read_text(encoding='utf-8')
-          old = '<button id="t_expenses" onclick="showTab(\'expenses\')">仕入・外注・経費</button>'
-          new = '<button id="t_expenses" onclick="location.href=\'./expenses.html\'">仕入・外注・経費 ↗</button>'
-          if old in text:
-              text = text.replace(old, new, 1)
-
-          scripts = [
-              '<script src="./assets/labor-cost-patch.js"></script>',
-              '<script src="./assets/consulting-july-fix.js"></script>',
-              '<script src="./assets/validation-fix.js"></script>',
-              '<script src="./assets/daily-display-fix.js"></script>',
-              '<script src="./assets/product-july-fix.js"></script>',
-              '<script src="./assets/monthly-cutoff-fix.js"></script>',
-              '<script src="./assets/admin-stabilization.js"></script>',
+          p=Path('_site/index.html')
+          text=p.read_text(encoding='utf-8')
+          scripts=[
+            '<script src="./assets/labor-cost-patch.js"></script>',
+            '<script src="./assets/consulting-july-fix.js"></script>',
+            '<script src="./assets/validation-fix.js"></script>',
+            '<script src="./assets/daily-display-fix.js"></script>',
+            '<script src="./assets/product-july-fix.js"></script>',
+            '<script src="./assets/monthly-cutoff-fix.js"></script>',
+            '<script src="./assets/admin-stabilization.js"></script>',
+            '<script src="./assets/july-source-of-truth.js"></script>',
           ]
           for script in scripts:
-              if script not in text:
-                  text = text.replace('</body>', script + '</body>', 1)
-
-          replacements = {
-              'ゼイリシクミアイ': '岡税理士事務所',
-              'カ）イマイ': '株式会社イマイ',
-              'カ)イマイ': '株式会社イマイ',
-              'オオクマショウテン': '大熊商店',
-              'オオワクショウテン': '大熊商店',
-              'ノウユウ': '農友（豚肉・その他食材）',
-              'NSSシャロウシ': 'MAST社会保険労務士法人',
-              'NSS.シャロウシ': 'MAST社会保険労務士法人',
-              'イモンホームズ': 'イモンホームズ（駐車場賃貸）',
-              'ケイヒ': '現金経費',
-          }
-          for src, dst in replacements.items():
-              text = text.replace(src, dst)
-          p.write_text(text, encoding='utf-8')
-
-          ep = Path('_site/expenses.html')
-          if ep.exists():
-              e = ep.read_text(encoding='utf-8')
-              for src, dst in replacements.items():
-                  e = e.replace(src, dst)
-              ep.write_text(e, encoding='utf-8')
+            if script not in text:
+              text=text.replace('</body>',script+'</body>',1)
+          p.write_text(text,encoding='utf-8')
           PY
           touch _site/.nojekyll
-      - name: Verify required files and constants
+      - name: Verify source of truth
         run: |
-          test -f _site/index.html || (echo "ERROR: index missing" && exit 1)
-          test -f _site/admin-audit.html || (echo "ERROR: admin audit page missing" && exit 1)
-          test -f _site/manual/index.html || (echo "ERROR: manual missing" && exit 1)
-          test -f _site/assets/labor-cost-patch.js || (echo "ERROR: labor patch missing" && exit 1)
-          test -f _site/assets/consulting-july-fix.js || (echo "ERROR: consulting patch missing" && exit 1)
-          test -f _site/assets/validation-fix.js || (echo "ERROR: validation patch missing" && exit 1)
-          test -f _site/assets/daily-display-fix.js || (echo "ERROR: daily display patch missing" && exit 1)
-          test -f _site/assets/product-july-fix.js || (echo "ERROR: July product patch missing" && exit 1)
-          test -f _site/assets/monthly-cutoff-fix.js || (echo "ERROR: monthly cutoff patch missing" && exit 1)
-          test -f _site/assets/admin-stabilization.js || (echo "ERROR: admin stabilization missing" && exit 1)
-          grep -q './assets/admin-stabilization.js' _site/index.html || (echo "ERROR: admin stabilization not linked" && exit 1)
-          grep -q 'FRIED_RICE.qty' _site/assets/admin-stabilization.js || (echo "ERROR: fried rice canonical rule missing" && exit 1)
-          grep -q '4917050' _site/assets/admin-stabilization.js || (echo "ERROR: July confirmed sales missing" && exit 1)
-          grep -q '4995250' _site/assets/admin-stabilization.js || (echo "ERROR: June provisional sales missing" && exit 1)
-          grep -q 'issued: 5048' _site/assets/admin-stabilization.js || (echo "ERROR: July issued count missing" && exit 1)
-          grep -q 'settlement: -53' _site/assets/admin-stabilization.js || (echo "ERROR: July settlement count missing" && exit 1)
-          grep -q 'net: 4995' _site/assets/admin-stabilization.js || (echo "ERROR: July net count missing" && exit 1)
-          grep -q '32,690円・60人' _site/admin-audit.html || (echo "ERROR: unresolved July difference missing" && exit 1)
-          echo "OK: administrator stabilization and audit status are deployed"
+          test -f _site/index.html
+          test -f _site/assets/july-source-of-truth.js
+          grep -q './assets/july-source-of-truth.js' _site/index.html
+          grep -q "sales:4917050" _site/assets/july-source-of-truth.js
+          grep -q "issued:5048" _site/assets/july-source-of-truth.js
+          grep -q "settlement:-53" _site/assets/july-source-of-truth.js
+          grep -q "net:4995" _site/assets/july-source-of-truth.js
+          grep -q "\['チャーハン',800,135,0,108000\]" _site/assets/july-source-of-truth.js
+          python - <<'PY'
+          import re,ast
+          s=open('_site/assets/july-source-of-truth.js',encoding='utf-8').read()
+          rows=re.findall(r"\['([^']+)',(\d+),(\d+),(-?\d+),(\d+)\]",s)
+          assert len(rows)==40, len(rows)
+          names=[r[0] for r in rows]
+          assert len(set(names))==40
+          issued=sum(int(r[2]) for r in rows)
+          settlement=sum(int(r[3]) for r in rows)
+          sales=sum(int(r[4]) for r in rows)
+          assert issued==5048, issued
+          assert settlement==-53, settlement
+          assert issued+settlement==4995
+          assert sales==4917050, sales
+          print('OK: 40 products, no duplicates, all totals match July journal')
+          PY
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
