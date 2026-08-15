@@ -49,7 +49,7 @@ jobs:
 
       - name: Capture full-page desktop and mobile screenshots
         shell: bash
-        timeout-minutes: 3
+        timeout-minutes: 4
         run: |
           set -euo pipefail
           CHROME=$(command -v chromium-browser || command -v chromium)
@@ -61,8 +61,25 @@ jobs:
             async function shot(name,width,height,mobile){
               const page=await browser.newPage();
               await page.setViewport({width,height,deviceScaleFactor:1,isMobile:mobile,hasTouch:mobile});
-              await page.goto('http://127.0.0.1:4173/tsubasa-top-preview.html',{waitUntil:'domcontentloaded',timeout:30000});
-              await page.evaluate(async()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));for(let y=0;y<document.body.scrollHeight;y+=Math.max(400,innerHeight*.7)){scrollTo(0,y);await sleep(120)}scrollTo(0,0);await sleep(1000)});
+              await page.goto('http://127.0.0.1:4173/tsubasa-top-preview.html',{waitUntil:'networkidle2',timeout:45000});
+              const result=await page.evaluate(async()=>{
+                const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+                document.documentElement.style.scrollBehavior='auto';
+                const step=Math.max(220,Math.floor(innerHeight*.35));
+                const max=document.documentElement.scrollHeight-innerHeight;
+                for(let y=0;y<=max;y+=step){
+                  window.scrollTo(0,y);
+                  await sleep(220);
+                }
+                window.scrollTo(0,max);
+                await sleep(500);
+                const hidden=[...document.querySelectorAll('.reveal:not(.on)')].map((el,i)=>({i,cls:el.className,text:(el.textContent||'').trim().slice(0,60)}));
+                window.scrollTo(0,0);
+                await sleep(2200);
+                return {hidden,total:document.querySelectorAll('.reveal').length,height:document.documentElement.scrollHeight};
+              });
+              console.log(name,JSON.stringify(result));
+              if(result.hidden.length){throw new Error(`${name}: ${result.hidden.length}/${result.total} reveal elements never became visible: ${JSON.stringify(result.hidden)}`)}
               await page.screenshot({path:name,fullPage:true});
               await page.close();
             }
@@ -88,5 +105,5 @@ jobs:
         shell: bash
         run: |
           echo '## Visual QA' >> "$GITHUB_STEP_SUMMARY"
-          echo '- desktop full-page screenshot: captured' >> "$GITHUB_STEP_SUMMARY"
-          echo '- mobile full-page screenshot: captured' >> "$GITHUB_STEP_SUMMARY"
+          echo '- desktop full-page screenshot: captured after complete reveal validation' >> "$GITHUB_STEP_SUMMARY"
+          echo '- mobile full-page screenshot: captured after complete reveal validation' >> "$GITHUB_STEP_SUMMARY"
