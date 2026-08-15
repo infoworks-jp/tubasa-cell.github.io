@@ -9,6 +9,7 @@ on:
       - 'manual/**'
       - 'docs/**'
       - 'preview/**'
+      - 'newsite/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -43,6 +44,7 @@ jobs:
           if [ -d manual ]; then cp -R manual _site/manual; fi
           if [ -d docs ]; then cp -R docs _site/docs; fi
           if [ -d preview ]; then cp -R preview _site/preview; fi
+          if [ -d newsite ]; then cp -R newsite _site/newsite; fi
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html')
@@ -67,7 +69,12 @@ jobs:
         run: |
           test -f _site/index.html
           test -f _site/preview/index.html
+          test -f _site/newsite/index.html
+          test -f _site/newsite/assets/tsubasa-sprite.webp
           test -f _site/assets/july-source-of-truth.js
+          grep -q 'data-lang="en"' _site/newsite/index.html
+          grep -q 'data-lang="ko"' _site/newsite/index.html
+          grep -q 'data-lang="zh"' _site/newsite/index.html
           grep -q './assets/july-source-of-truth.js' _site/index.html
           grep -q "sales:4917050" _site/assets/july-source-of-truth.js
           grep -q "issued:5048" _site/assets/july-source-of-truth.js

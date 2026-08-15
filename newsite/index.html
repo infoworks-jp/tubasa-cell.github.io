@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>味一番つばさ｜札幌すすきの 新ラーメン横丁</title>
+<meta name="theme-color" content="#050505">
+<style>
+:root{--red:#e01920;--gold:#d4aa58;--ink:#050505;--paper:#f3eee4;--muted:#b9b1a8}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:#050505}
+body{margin:0;color:var(--paper);background:
+radial-gradient(circle at 52% -10%,rgba(120,0,0,.34),transparent 38%),
+#050505;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:80;opacity:.08;
+background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E")}
+#ink{position:fixed;inset:0;width:100%;height:100%;z-index:9;pointer-events:none;mix-blend-mode:screen;opacity:.62}
+a{color:inherit}
+header{position:fixed;left:0;right:0;top:0;height:72px;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:0 5vw;background:linear-gradient(#000e,#0000);backdrop-filter:blur(8px)}
+.brand{font:900 25px Georgia,"Yu Mincho",serif;letter-spacing:.08em}.brand strong{color:var(--red)}
+nav{display:flex;gap:26px}nav a{text-decoration:none;font-size:10px;letter-spacing:.24em;opacity:.72}
+.lang{display:flex;gap:4px}.lang button{border:0;background:transparent;color:#fff;font-size:10px;padding:7px;opacity:.45;cursor:pointer}.lang button.active{color:#ff423b;opacity:1}
+.sprite{background-image:url("assets/tsubasa-sprite.webp");background-repeat:no-repeat;background-size:100% 1200%}
+.f0{background-position:center 0%}.f1{background-position:center 9.0909%}.f2{background-position:center 18.1818%}.f3{background-position:center 27.2727%}.f4{background-position:center 36.3636%}.f5{background-position:center 45.4545%}.f6{background-position:center 54.5454%}.f7{background-position:center 63.6363%}.f8{background-position:center 72.7272%}.f9{background-position:center 81.8181%}.f10{background-position:center 90.909%}.f11{background-position:center 100%}
+.hero{height:100svh;min-height:720px;position:relative;overflow:hidden}
+.heroMedia{position:absolute;inset:-2%;transform:scale(1.03);animation:heroBreath 12s ease-in-out infinite alternate}
+@keyframes heroBreath{to{transform:scale(1.07) translateY(-.5%)}}
+.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#000 0,#000b 28%,transparent 68%),linear-gradient(0deg,#050505 0,transparent 46%)}
+.heroCopy{position:absolute;z-index:3;left:6vw;bottom:10vh;max-width:900px}
+.eyebrow{font-size:10px;letter-spacing:.38em;color:#ddb86d}
+.hero h1{font:900 clamp(60px,9vw,140px)/.82 Georgia,"Yu Mincho",serif;letter-spacing:-.055em;margin:18px 0 28px;text-shadow:0 12px 45px #000}
+.hero h1 span{display:block;color:var(--red)}.hero p{max-width:620px;font:500 clamp(15px,1.35vw,21px)/2 Georgia,"Yu Mincho",serif}
+.scrollCue{position:absolute;z-index:3;right:4vw;bottom:8vh;writing-mode:vertical-rl;font-size:9px;letter-spacing:.36em;color:#aaa}
+.tape{overflow:hidden;border-block:1px solid #391415;color:#a7191d;padding:16px 0;font:900 24px Georgia,serif;letter-spacing:.15em;white-space:nowrap}
+.tape span{display:inline-block;animation:tape 23s linear infinite}@keyframes tape{to{transform:translateX(-50%)}}
+.section{padding:115px 6vw;position:relative}
+.title{font:900 clamp(45px,6.7vw,96px)/.92 Georgia,"Yu Mincho",serif;margin:0 0 58px;letter-spacing:-.035em}.title small{font:700 10px sans-serif;display:block;color:#dd3030;letter-spacing:.42em;margin-bottom:16px}
+.limited{display:grid;grid-template-columns:1.35fr .65fr;min-height:790px;background:linear-gradient(115deg,#190000,#080303 62%)}
+.limitedPhoto{position:relative;overflow:hidden}.limitedPhoto .sprite{position:absolute;inset:0}
+.limitedPhoto:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 60%,#080303)}
+.steam{position:absolute;z-index:2;left:47%;top:34%;width:250px;height:340px;border-radius:50%;filter:blur(20px);background:radial-gradient(ellipse,#fff7,transparent 64%);mix-blend-mode:screen;animation:steam 5s ease-in-out infinite alternate}
+@keyframes steam{to{transform:translate(-45px,-95px) scale(1.3) rotate(7deg);opacity:.15}}
+.limitedCopy{padding:8vw 5vw;display:flex;flex-direction:column;justify-content:center}.badge{align-self:flex-start;border:1px solid #f04b45;color:#ff675f;padding:8px 13px;font-size:10px;letter-spacing:.24em}.limited h2{font:900 clamp(43px,5vw,78px)/1.04 Georgia,"Yu Mincho",serif;margin:26px 0 18px}.price{font:700 34px Georgia,serif;color:#ebc574}.limited p{line-height:2;color:#d0c9c4}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}.food{position:relative;height:650px;overflow:hidden;background:#111}.food .sprite{position:absolute;inset:0;transition:transform .8s}.food:hover .sprite{transform:scale(1.04)}.food:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#000 0,transparent 63%)}.cap{position:absolute;z-index:2;left:28px;right:22px;bottom:28px}.cap h3{font:800 27px Georgia,"Yu Mincho",serif;margin:0 0 8px}.cap span{color:#e1b865}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.tile{border:1px solid #2b1717;background:#0b0b0b;overflow:hidden}.tilePic{aspect-ratio:16/10;transition:transform .7s}.tile:hover .tilePic{transform:scale(1.035)}.tile .meta{padding:18px}.tile h3{font:700 20px Georgia,"Yu Mincho",serif;margin:0 0 8px}.tile .yen{color:#deb76a;font-size:14px}
+.menuText{display:grid;grid-template-columns:1fr 1fr;gap:70px;margin-top:78px;border-top:1px solid #3c2020}.col{padding-top:24px}.row{display:flex;justify-content:space-between;gap:18px;padding:15px 0;border-bottom:1px dotted #403333}.row b{font:700 17px Georgia,"Yu Mincho",serif}.row span{color:#dcb36a;white-space:nowrap}
+.board{background:#100a08}.boardWrap{max-width:1300px;margin:auto;position:relative}.boardShot{aspect-ratio:16/10;border:1px solid #5c3b24;box-shadow:0 40px 100px #000}
+.access{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:end}.access h2{font:900 clamp(48px,7vw,100px)/1 Georgia,"Yu Mincho",serif;margin:0}.hours{font:700 clamp(34px,4vw,60px) Georgia,serif;color:#e2bb6d}.access p{line-height:2;color:#bbb}
+footer{padding:42px 6vw;border-top:1px solid #281616;color:#777;font-size:10px;letter-spacing:.12em;display:flex;justify-content:space-between}
+.reveal{opacity:0;transform:translateY(36px);transition:1s}.reveal.show{opacity:1;transform:none}
+@media(max-width:860px){
+header{height:60px;padding:0 18px}.brand{font-size:19px}nav{display:none}.hero{min-height:760px}.hero:after{background:linear-gradient(0deg,#050505 0,#0005 65%,#0002)}.heroCopy{left:22px;right:20px;bottom:10vh}.hero h1{font-size:62px}.scrollCue{display:none}.section{padding:82px 20px}.limited{grid-template-columns:1fr}.limitedPhoto{height:62svh}.limitedPhoto:after{background:linear-gradient(0deg,#080303 0,transparent 40%)}.limitedCopy{padding:58px 22px}.trio{grid-template-columns:1fr}.food{height:70svh}.grid{grid-template-columns:1fr 1fr;gap:7px}.tile .meta{padding:12px}.tile h3{font-size:15px}.tile .yen{font-size:12px}.menuText{grid-template-columns:1fr;gap:0}.access{grid-template-columns:1fr;gap:34px}footer{display:block;line-height:2}
+}
+</style></head>
+<body>
+<canvas id="ink"></canvas>
+<header><div class="brand">味一番 <strong>つばさ</strong></div><nav><a href="#limited">LIMITED</a><a href="#signature">SIGNATURE</a><a href="#menu">MENU</a><a href="#access">ACCESS</a></nav><div class="lang"><button data-lang="ja" class="active">JP</button><button data-lang="en">EN</button><button data-lang="ko">KR</button><button data-lang="zh">CN</button></div></header>
+<section class="hero"><div class="heroMedia sprite f0"></div><div class="heroCopy"><div class="eyebrow">SAPPORO · SUSUKINO · SHIN RAMEN YOKOCHO</div><h1 data-k="hero1">すすきのに、<span data-k="hero2">旨い一杯。</span></h1><p data-k="heroP">三日間煮込んだスープ。特注麺。とろけるチャーシュー。味一番つばさが、夜の札幌に届ける一杯。</p></div><div class="scrollCue">SCROLL TO DISCOVER</div></section>
+<div class="tape"><span>TSUBASA RAMEN — SAPPORO SUSUKINO — ULTIMATE MISO — OPEN UNTIL 3AM — TSUBASA RAMEN — SAPPORO SUSUKINO — ULTIMATE MISO — OPEN UNTIL 3AM — </span></div>
+<section id="limited" class="limited reveal"><div class="limitedPhoto"><div class="sprite f1"></div><i class="steam"></i></div><div class="limitedCopy"><span class="badge" data-k="limitedBadge">期間限定 / LIMITED</span><h2 data-k="limitedName">特製<br>辛味噌ラーメン</h2><div class="price">¥1,200 <small data-k="tax">税込</small></div><p data-k="limitedP">濃厚味噌に洗練された辛味を重ね、野菜の旨みも存分に引き出した至極の一杯。丁寧に仕上げた今だけの特別仕様。数量限定・期間限定。</p></div></section>
+<section id="signature" class="section"><h2 class="title reveal"><small>SIGNATURE BOWLS</small><span data-k="signatureTitle">湯気まで、旨い。</span></h2><div class="trio reveal">
+<article class="food"><div class="sprite f2"></div><div class="cap"><h3 data-k="butter">バターコーンラーメン</h3><span data-k="butterPrice">味噌 ¥1,400 / 塩・醤油 ¥1,300</span></div></article>
+<article class="food"><div class="sprite f3"></div><div class="cap"><h3 data-k="chashu">チャーシュー麺</h3><span data-k="chashuPrice">味噌 ¥1,450 / 醤油・塩 ¥1,350</span></div></article>
+<article class="food"><div class="sprite f4"></div><div class="cap"><h3 data-k="spicy">ピリ辛ねぎラーメン</h3><span data-k="spicyPrice">味噌 ¥1,300 / 醤油・塩 ¥1,180</span></div></article>
+</div></section>
+<section id="menu" class="section"><h2 class="title reveal"><small>FULL MENU</small><span data-k="menuTitle">選ぶ時間も、<br>ごちそう。</span></h2><div class="grid reveal">
+<article class="tile"><div class="tilePic sprite f5"></div><div class="meta"><h3 data-k="kimchi">キムチラーメン</h3><div class="yen" data-k="kimchiPrice">味噌 ¥1,250 / 醤油・塩 ¥1,130</div></div></article>
+<article class="tile"><div class="tilePic sprite f6"></div><div class="meta"><h3 data-k="negi">ねぎたっぷりラーメン</h3><div class="yen" data-k="negiPrice">味噌 ¥1,300 / 醤油・塩 ¥1,180</div></div></article>
+<article class="tile"><div class="tilePic sprite f7"></div><div class="meta"><h3 data-k="shio">塩・醤油ラーメン</h3><div class="yen" data-k="shioPrice">各 ¥980</div></div></article>
+<article class="tile"><div class="tilePic sprite f8"></div><div class="meta"><h3 data-k="fried">チャーハン</h3><div class="yen">¥800</div></div></article>
+<article class="tile"><div class="tilePic sprite f9"></div><div class="meta"><h3 data-k="gyoza">餃子</h3><div class="yen">¥500</div></div></article>
+<article class="tile"><div class="tilePic sprite f0"></div><div class="meta"><h3 data-k="tsubasa">つばさラーメン</h3><div class="yen" data-k="tsubasaPrice">いくら丼＋ハーフラーメン ¥2,000</div></div></article>
+</div>
+<div class="menuText reveal"><div class="col">
+<div class="row"><b data-k="miso">究極の味噌ラーメン</b><span>¥1,100</span></div><div class="row"><b data-k="shio">塩・醤油ラーメン</b><span data-k="each980">各 ¥980</span></div><div class="row"><b data-k="negi">ねぎたっぷりラーメン</b><span data-k="miso1300">味噌 ¥1,300</span></div><div class="row"><b data-k="kimchi">キムチラーメン</b><span data-k="miso1250">味噌 ¥1,250</span></div></div>
+<div class="col"><div class="row"><b data-k="chashu">チャーシュー麺</b><span data-k="miso1450">味噌 ¥1,450</span></div><div class="row"><b data-k="butter">バターコーンラーメン</b><span data-k="miso1400">味噌 ¥1,400</span></div><div class="row"><b data-k="fried">チャーハン</b><span>¥800</span></div><div class="row"><b data-k="gyoza">餃子</b><span>¥500</span></div></div></div>
+</section>
+<section class="section board"><h2 class="title reveal"><small>MENU BOARD</small><span data-k="boardTitle">ひと目で、全部。</span></h2><div class="boardWrap reveal"><div class="boardShot sprite f11"></div></div></section>
+<section id="access" class="section"><div class="access reveal"><h2 data-k="accessTitle">朝3時まで、<br>すすきので。</h2><div><div class="hours">11:00 — 03:00</div><p data-k="accessP">ラストオーダー 02:45<br>毎週月曜日 定休<br>札幌市中央区南4条西3丁目1-1 第3グリーンビル 新ラーメン横丁<br>TEL 011-521-5963</p></div></div></section>
+<footer><div>味一番つばさ / TSUBASA RAMEN</div><div>© TSUBASA RAMEN</div></footer>
+<script>
+const dict={
+ja:{hero1:'すすきのに、',hero2:'旨い一杯。',heroP:'三日間煮込んだスープ。特注麺。とろけるチャーシュー。味一番つばさが、夜の札幌に届ける一杯。',limitedBadge:'期間限定 / LIMITED',limitedName:'特製<br>辛味噌ラーメン',tax:'税込',limitedP:'濃厚味噌に洗練された辛味を重ね、野菜の旨みも存分に引き出した至極の一杯。丁寧に仕上げた今だけの特別仕様。数量限定・期間限定。',signatureTitle:'湯気まで、旨い。',menuTitle:'選ぶ時間も、<br>ごちそう。',butter:'バターコーンラーメン',butterPrice:'味噌 ¥1,400 / 塩・醤油 ¥1,300',chashu:'チャーシュー麺',chashuPrice:'味噌 ¥1,450 / 醤油・塩 ¥1,350',spicy:'ピリ辛ねぎラーメン',spicyPrice:'味噌 ¥1,300 / 醤油・塩 ¥1,180',kimchi:'キムチラーメン',kimchiPrice:'味噌 ¥1,250 / 醤油・塩 ¥1,130',negi:'ねぎたっぷりラーメン',negiPrice:'味噌 ¥1,300 / 醤油・塩 ¥1,180',shio:'塩・醤油ラーメン',shioPrice:'各 ¥980',fried:'チャーハン',gyoza:'餃子',tsubasa:'つばさラーメン',tsubasaPrice:'いくら丼＋ハーフラーメン ¥2,000',miso:'究極の味噌ラーメン',each980:'各 ¥980',miso1300:'味噌 ¥1,300',miso1250:'味噌 ¥1,250',miso1450:'味噌 ¥1,450',miso1400:'味噌 ¥1,400',boardTitle:'ひと目で、全部。',accessTitle:'朝3時まで、<br>すすきので。',accessP:'ラストオーダー 02:45<br>毎週月曜日 定休<br>札幌市中央区南4条西3丁目1-1 第3グリーンビル 新ラーメン横丁<br>TEL 011-521-5963'},
+en:{hero1:'One unforgettable bowl,',hero2:'in Susukino.',heroP:'A broth simmered for three days. Custom noodles. Melt-in-your-mouth chashu. Tsubasa Ramen for the nights of Sapporo.',limitedBadge:'LIMITED TIME',limitedName:'Special<br>Spicy Miso Ramen',tax:'tax incl.',limitedP:'Rich miso layered with a refined heat and the full sweetness of vegetables. A special bowl available only for a limited time and in limited quantities.',signatureTitle:'You can taste the steam.',menuTitle:'Choosing is part<br>of the feast.',butter:'Butter Corn Ramen',butterPrice:'Miso ¥1,400 / Salt・Soy ¥1,300',chashu:'Chashu Ramen',chashuPrice:'Miso ¥1,450 / Soy・Salt ¥1,350',spicy:'Spicy Green Onion Ramen',spicyPrice:'Miso ¥1,300 / Soy・Salt ¥1,180',kimchi:'Kimchi Ramen',kimchiPrice:'Miso ¥1,250 / Soy・Salt ¥1,130',negi:'Green Onion Ramen',negiPrice:'Miso ¥1,300 / Soy・Salt ¥1,180',shio:'Salt / Soy Sauce Ramen',shioPrice:'¥980 each',fried:'Fried Rice',gyoza:'Gyoza',tsubasa:'Tsubasa Ramen',tsubasaPrice:'Ikura rice bowl + half ramen ¥2,000',miso:'Ultimate Miso Ramen',each980:'¥980 each',miso1300:'Miso ¥1,300',miso1250:'Miso ¥1,250',miso1450:'Miso ¥1,450',miso1400:'Miso ¥1,400',boardTitle:'Everything at a glance.',accessTitle:'In Susukino,<br>until 3 AM.',accessP:'Last order 2:45 AM<br>Closed Mondays<br>Shin Ramen Yokocho, 3rd Green Bldg., Minami 4-jo Nishi 3-chome 1-1, Chuo-ku, Sapporo<br>TEL 011-521-5963'},
+ko:{hero1:'스스키노에서,',hero2:'맛있는 한 그릇.',heroP:'3일간 끓인 스프, 특주 면, 부드러운 차슈. 삿포로의 밤을 위한 츠바사 라멘의 한 그릇.',limitedBadge:'기간 한정 / LIMITED',limitedName:'특제<br>매운 미소 라멘',tax:'세금 포함',limitedP:'진한 미소에 세련된 매운맛을 더하고 채소의 감칠맛을 끌어낸 특별한 한 그릇. 수량・기간 한정.',signatureTitle:'김까지 맛있다.',menuTitle:'고르는 시간도,<br>맛의 일부.',butter:'버터 콘 라멘',butterPrice:'미소 1,400엔 / 소금・간장 1,300엔',chashu:'차슈 라멘',chashuPrice:'미소 1,450엔 / 간장・소금 1,350엔',spicy:'매운 파 라멘',spicyPrice:'미소 1,300엔 / 간장・소금 1,180엔',kimchi:'김치 라멘',kimchiPrice:'미소 1,250엔 / 간장・소금 1,130엔',negi:'파 듬뿍 라멘',negiPrice:'미소 1,300엔 / 간장・소금 1,180엔',shio:'소금 / 간장 라멘',shioPrice:'각 980엔',fried:'볶음밥',gyoza:'교자',tsubasa:'츠바사 라멘',tsubasaPrice:'연어알 덮밥 + 하프 라멘 2,000엔',miso:'궁극의 미소 라멘',each980:'각 980엔',miso1300:'미소 1,300엔',miso1250:'미소 1,250엔',miso1450:'미소 1,450엔',miso1400:'미소 1,400엔',boardTitle:'한눈에 보는 전체 메뉴.',accessTitle:'스스키노에서,<br>새벽 3시까지.',accessP:'라스트 오더 02:45<br>매주 월요일 휴무<br>삿포로시 주오구 미나미4조 니시3초메 1-1 제3그린빌딩 신라멘요코초<br>TEL 011-521-5963'},
+zh:{hero1:'在薄野，',hero2:'遇见一碗好面。',heroP:'熬煮三天的汤底、特制面条、入口即化的叉烧。翼拉面，为札幌的夜晚奉上一碗好味道。',limitedBadge:'期间限定 / LIMITED',limitedName:'特制<br>辣味噌拉面',tax:'含税',limitedP:'浓郁味噌融合细腻辣味，并充分引出蔬菜鲜味。仅在限定期间、限定数量供应。',signatureTitle:'连热气都诱人。',menuTitle:'挑选的时间，<br>也是美味的一部分。',butter:'黄油玉米拉面',butterPrice:'味噌 1,400日元 / 盐味・酱油 1,300日元',chashu:'叉烧拉面',chashuPrice:'味噌 1,450日元 / 酱油・盐味 1,350日元',spicy:'香辣葱丝拉面',spicyPrice:'味噌 1,300日元 / 酱油・盐味 1,180日元',kimchi:'泡菜拉面',kimchiPrice:'味噌 1,250日元 / 酱油・盐味 1,130日元',negi:'葱量十足拉面',negiPrice:'味噌 1,300日元 / 酱油・盐味 1,180日元',shio:'盐味 / 酱油拉面',shioPrice:'各 980日元',fried:'炒饭',gyoza:'饺子',tsubasa:'翼拉面',tsubasaPrice:'鲑鱼籽盖饭 + 半份拉面 2,000日元',miso:'终极味噌拉面',each980:'各 980日元',miso1300:'味噌 1,300日元',miso1250:'味噌 1,250日元',miso1450:'味噌 1,450日元',miso1400:'味噌 1,400日元',boardTitle:'全部菜单，一目了然。',accessTitle:'在薄野，<br>营业至凌晨3点。',accessP:'最后点餐 02:45<br>每周一休息<br>札幌市中央区南4条西3丁目1-1 第3绿色大楼 新拉面横丁<br>TEL 011-521-5963'}};
+document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.lang button').forEach(x=>x.classList.remove('active'));b.classList.add('active');const d=dict[b.dataset.lang];document.documentElement.lang=b.dataset.lang;document.querySelectorAll('[data-k]').forEach(el=>{const v=d[el.dataset.k];if(v!=null)el.innerHTML=v})});
+const io=new IntersectionObserver(es=>es.forEach(e=>e.isIntersecting&&e.target.classList.add('show')),{threshold:.11});document.querySelectorAll('.reveal').forEach(e=>io.observe(e));
+const c=document.querySelector('#ink'),ctx=c.getContext('2d');let p=[];function rs(){c.width=innerWidth*devicePixelRatio;c.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}rs();addEventListener('resize',rs);
+function add(x,y,n=2){for(let i=0;i<n;i++)p.push({x:x+(Math.random()-.5)*34,y:y+(Math.random()-.5)*20,r:9+Math.random()*24,a:.16+Math.random()*.14,vx:(Math.random()-.5)*.45,vy:-.25-Math.random()*.75,red:Math.random()<.24})}
+addEventListener('pointermove',e=>add(e.clientX,e.clientY,1));setInterval(()=>add(innerWidth*(.2+Math.random()*.6),innerHeight*.78,2),170);
+(function loop(){ctx.clearRect(0,0,innerWidth,innerHeight);p=p.filter(q=>q.a>.008&&q.y>-120);for(const q of p){q.x+=q.vx+Math.sin(q.y*.014)*.2;q.y+=q.vy;q.r+=.16;q.a*=.993;const g=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,q.r);g.addColorStop(0,q.red?`rgba(190,10,15,${q.a})`:`rgba(255,255,255,${q.a*.42})`);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,7);ctx.fill()}requestAnimationFrame(loop)})();
+</script>
+</body></html>
