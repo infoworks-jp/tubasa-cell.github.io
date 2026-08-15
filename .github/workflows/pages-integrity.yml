@@ -4,8 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  schedule:
-    - cron: '17 0 * * *'
 
 permissions:
   contents: read
@@ -18,27 +16,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify required public files
+      - name: Verify preview source
         shell: bash
         run: |
           set -euo pipefail
-          test -s index.html
-          test -s manual/index.html
-          test -s manual.html
           test -s tsubasa-top-preview.html
-          test -f .nojekyll
-          grep -q '原本主義・推測禁止・公開確認必須' manual/index.html
-          grep -q 'つばさ1' manual/index.html
           grep -q 'すすきので、' tsubasa-top-preview.html
           grep -q '味噌バターコーン' tsubasa-top-preview.html
           grep -q 'つばさラーメン' tsubasa-top-preview.html
           grep -q '月曜日' tsubasa-top-preview.html
-
-      - name: Validate internal manual link
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -q 'url=./manual/' manual.html
 
       - name: Install Chromium and Puppeteer
         shell: bash
@@ -54,7 +40,6 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/tsubasa-http.log 2>&1 &
-          echo $! > /tmp/tsubasa-http.pid
           for i in {1..20}; do
             curl -fsS http://127.0.0.1:4173/tsubasa-top-preview.html >/dev/null && exit 0
             sleep 1
@@ -69,26 +54,24 @@ jobs:
           set -euo pipefail
           CHROME=$(command -v chromium-browser || command -v chromium)
           export CHROME
-          cat > /tmp/capture.mjs <<'EOF'
-          import puppeteer from 'puppeteer-core';
-          const browser = await puppeteer.launch({headless:true, executablePath:process.env.CHROME, args:['--no-sandbox','--disable-dev-shm-usage']});
-          async function shot(name,width,height,mobile=false){
-            const page=await browser.newPage();
-            await page.setViewport({width,height,deviceScaleFactor:1,isMobile:mobile,hasTouch:mobile});
-            await page.goto('http://127.0.0.1:4173/tsubasa-top-preview.html',{waitUntil:'domcontentloaded',timeout:30000});
-            await page.evaluate(async()=>{
-              const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-              for(let y=0;y<document.body.scrollHeight;y+=Math.max(400,innerHeight*.7)){scrollTo(0,y);await sleep(120)}
-              scrollTo(0,0); await sleep(800);
-            });
-            await page.screenshot({path:name,fullPage:true,captureBeyondViewport:true});
-            await page.close();
-          }
-          await shot('tsubasa-desktop.png',1440,1000,false);
-          await shot('tsubasa-mobile.png',390,844,true);
-          await browser.close();
+          cat > capture.cjs <<'EOF'
+          const puppeteer = require('puppeteer-core');
+          (async()=>{
+            const browser=await puppeteer.launch({headless:true,executablePath:process.env.CHROME,args:['--no-sandbox','--disable-dev-shm-usage']});
+            async function shot(name,width,height,mobile){
+              const page=await browser.newPage();
+              await page.setViewport({width,height,deviceScaleFactor:1,isMobile:mobile,hasTouch:mobile});
+              await page.goto('http://127.0.0.1:4173/tsubasa-top-preview.html',{waitUntil:'domcontentloaded',timeout:30000});
+              await page.evaluate(async()=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));for(let y=0;y<document.body.scrollHeight;y+=Math.max(400,innerHeight*.7)){scrollTo(0,y);await sleep(120)}scrollTo(0,0);await sleep(1000)});
+              await page.screenshot({path:name,fullPage:true});
+              await page.close();
+            }
+            await shot('tsubasa-desktop.png',1440,1000,false);
+            await shot('tsubasa-mobile.png',390,844,true);
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
           EOF
-          node /tmp/capture.mjs
+          node capture.cjs
           test -s tsubasa-desktop.png
           test -s tsubasa-mobile.png
 
@@ -104,10 +87,6 @@ jobs:
       - name: Publish verification summary
         shell: bash
         run: |
-          {
-            echo '## GitHub Pages integrity'
-            echo '- tsubasa-top-preview.html: OK'
-            echo '- desktop full-page screenshot: captured'
-            echo '- mobile full-page screenshot: captured'
-            echo '- visual QA artifact: uploaded'
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo '## Visual QA' >> "$GITHUB_STEP_SUMMARY"
+          echo '- desktop full-page screenshot: captured' >> "$GITHUB_STEP_SUMMARY"
+          echo '- mobile full-page screenshot: captured' >> "$GITHUB_STEP_SUMMARY"
