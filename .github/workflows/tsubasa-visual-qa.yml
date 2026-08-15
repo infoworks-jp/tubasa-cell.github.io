@@ -20,71 +20,54 @@ jobs:
         run: |
           npm init -y
           npm install puppeteer@24
-      - name: Wait for exact deployed revision and capture interactive QA
+      - name: Capture PC/mobile interactive QA
         env:
           TARGET: https://infoworks-jp.github.io/tubasa-cell.github.io/tsubasa-top-preview.html?v=${{ github.sha }}
-          EXPECTED_SHA: ${{ github.sha }}
         run: |
+          mkdir -p qa
           cat > qa.mjs <<'EOF'
-          import puppeteer from 'puppeteer';
-          import fs from 'node:fs';
-          const url=process.env.TARGET;
+          import puppeteer from 'puppeteer'; import fs from 'node:fs';
           const browser=await puppeteer.launch({headless:true,args:['--no-sandbox']});
-          fs.mkdirSync('qa',{recursive:true});
-          const devices=[['pc',1440,1000],['mobile',390,844]];
-          let failures=[];
-          for(const [name,width,height] of devices){
-            const p=await browser.newPage();
-            await p.setViewport({width,height,deviceScaleFactor:1});
-            let loaded=false;
-            for(let i=0;i<20;i++){
-              const r=await p.goto(url,{waitUntil:'networkidle2',timeout:60000});
-              if(r?.ok()){loaded=true;break}
-              await new Promise(r=>setTimeout(r,15000));
-            }
-            if(!loaded){failures.push(`${name}: public page failed to load`);continue}
-            await p.screenshot({path:`qa/${name}-top.png`,fullPage:false});
-            const sections=await p.$$('main.scene, section');
-            for(let i=0;i<sections.length;i++){
-              await sections[i].evaluate(el=>el.scrollIntoView({behavior:'instant',block:'center'}));
-              await new Promise(r=>setTimeout(r,700));
-              await p.screenshot({path:`qa/${name}-${String(i).padStart(2,'0')}.png`,fullPage:false});
-            }
-            const data=await p.evaluate(()=>({
-              width:document.documentElement.scrollWidth,
-              viewport:innerWidth,
-              titles:[...document.querySelectorAll('.food h2')].map(x=>({text:x.textContent.trim(),opacity:getComputedStyle(x.closest('.copy')).opacity,filter:getComputedStyle(x.closest('.copy')).filter})),
-              images:[...document.querySelectorAll('.food .bg,.store-bg')].map(x=>getComputedStyle(x).backgroundImage),
-              links:[...document.querySelectorAll('a')].map(a=>({text:a.textContent.trim(),href:a.href})),
-              canvas:document.querySelectorAll('canvas.flow').length
-            }));
-            fs.writeFileSync(`qa/${name}.json`,JSON.stringify(data,null,2));
-            if(data.width>data.viewport+2) failures.push(`${name}: horizontal overflow ${data.width}/${data.viewport}`);
-            if(data.canvas<4) failures.push(`${name}: flow canvases missing`);
-            if(data.titles.length<4) failures.push(`${name}: product titles missing`);
-            if(data.titles.some(t=>Number(t.opacity)<.9)) failures.push(`${name}: product reveal did not activate`);
-            if(!data.links.some(l=>l.href.includes('google.com/maps'))) failures.push(`${name}: MAP link missing`);
-            if(!data.links.some(l=>l.href.startsWith('tel:'))) failures.push(`${name}: telephone link missing`);
-            if(data.images.length<5) failures.push(`${name}: expected product/store images missing`);
-            if(name==='pc'){
-              await p.mouse.move(width*.25,height*.45); await p.mouse.move(width*.55,height*.5,{steps:12}); await p.mouse.click(width*.55,height*.5);
-              await new Promise(r=>setTimeout(r,500));
-              await p.screenshot({path:'qa/pc-pointer-effect.png'});
-            }else{
-              await p.touchscreen.tap(width*.5,height*.45); await new Promise(r=>setTimeout(r,500));
-              await p.screenshot({path:'qa/mobile-tap-effect.png'});
-            }
+          const failures=[];
+          for(const [name,width,height] of [['pc',1440,1000],['mobile',390,844]]){
+            const p=await browser.newPage(); await p.setViewport({width,height,deviceScaleFactor:1});
+            try{
+              await p.goto(process.env.TARGET,{waitUntil:'networkidle2',timeout:90000});
+              await p.screenshot({path:`qa/${name}-full.png`,fullPage:true});
+              const sections=await p.$$('main.scene, section');
+              for(let i=0;i<sections.length;i++){await sections[i].evaluate(el=>el.scrollIntoView({block:'center'}));await new Promise(r=>setTimeout(r,900));await p.screenshot({path:`qa/${name}-${i}.png`});}
+              const d=await p.evaluate(()=>{
+                const food=[...document.querySelectorAll('.food')];
+                const bg=food.map(s=>{const el=s.querySelector('.photo,.bg');return el?getComputedStyle(el).backgroundImage:''});
+                const store=document.querySelector('.store .photo,.store-bg');
+                return {scrollWidth:document.documentElement.scrollWidth,innerWidth,
+                  titles:food.map(s=>{const c=s.querySelector('.copy');return {text:s.querySelector('h2')?.textContent.trim()||'',opacity:c?getComputedStyle(c).opacity:'0'}}),
+                  images:[...bg,store?getComputedStyle(store).backgroundImage:''],
+                  links:[...document.querySelectorAll('a')].map(a=>a.href),canvases:document.querySelectorAll('canvas.flow').length};
+              });
+              fs.writeFileSync(`qa/${name}.json`,JSON.stringify(d,null,2));
+              if(d.scrollWidth>d.innerWidth+2) failures.push(`${name}: horizontal overflow`);
+              if(d.titles.length!==4) failures.push(`${name}: expected 4 product titles, got ${d.titles.length}`);
+              if(d.titles.some(x=>+x.opacity<.9)) failures.push(`${name}: reveal inactive`);
+              if(d.images.filter(Boolean).length<5) failures.push(`${name}: product/store background missing`);
+              if(d.canvases<5) failures.push(`${name}: flow canvas missing`);
+              if(!d.links.some(x=>x.includes('google.com/maps'))) failures.push(`${name}: MAP missing`);
+              if(!d.links.some(x=>x.startsWith('tel:'))) failures.push(`${name}: tel missing`);
+              if(name==='pc'){await p.mouse.move(150,300);await p.mouse.move(800,500,{steps:15});await p.mouse.click(800,500);}
+              else await p.touchscreen.tap(195,400);
+              await new Promise(r=>setTimeout(r,600)); await p.screenshot({path:`qa/${name}-interaction.png`});
+            }catch(e){failures.push(`${name}: ${e.message}`);fs.writeFileSync(`qa/${name}-error.txt`,e.stack||String(e));}
             await p.close();
           }
-          await browser.close();
-          fs.writeFileSync('qa/result.txt',failures.length?'FAIL\n'+failures.join('\n'):'PASS\n');
-          if(failures.length){console.error(failures.join('\n'));process.exit(1)}
+          await browser.close(); fs.writeFileSync('qa/result.txt',failures.length?'FAIL\n'+failures.join('\n'):'PASS\n');
+          if(failures.length) process.exitCode=1;
           EOF
           node qa.mjs
       - name: Upload QA evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tsubasa-visual-qa
-          path: qa/
+          name: tsubasa-visual-qa-${{ github.sha }}
+          path: qa
+          if-no-files-found: error
           retention-days: 14
