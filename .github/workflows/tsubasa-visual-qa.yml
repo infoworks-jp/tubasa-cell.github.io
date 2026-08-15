@@ -18,9 +18,9 @@ jobs:
           node-version: '20'
       - name: Install Chromium tooling
         run: |
-          npm init -y
-          npm install puppeteer@24
-      - name: Capture PC/mobile interactive QA
+          npm init -y >/dev/null 2>&1
+          npm install puppeteer@24 --silent
+      - name: Fast PC/mobile interactive QA
         env:
           TARGET: https://infoworks-jp.github.io/tubasa-cell.github.io/tsubasa-top-preview.html?v=${{ github.sha }}
         run: |
@@ -32,12 +32,11 @@ jobs:
           for(const [name,width,height] of [['pc',1440,1000],['mobile',390,844]]){
             const p=await browser.newPage(); await p.setViewport({width,height,deviceScaleFactor:1});
             try{
-              const response=await p.goto(process.env.TARGET,{waitUntil:'domcontentloaded',timeout:45000});
+              const response=await p.goto(process.env.TARGET,{waitUntil:'domcontentloaded',timeout:30000});
               if(!response || !response.ok()) throw new Error(`HTTP ${response?.status?.() ?? 'NO_RESPONSE'}`);
-              await new Promise(r=>setTimeout(r,5000));
-              await p.screenshot({path:`qa/${name}-full.png`,fullPage:true});
+              await new Promise(r=>setTimeout(r,1500));
               const sections=await p.$$('main.scene, section');
-              for(let i=0;i<sections.length;i++){await sections[i].evaluate(el=>el.scrollIntoView({block:'center'}));await new Promise(r=>setTimeout(r,900));await p.screenshot({path:`qa/${name}-${i}.png`});}
+              for(const s of sections){await s.evaluate(el=>el.scrollIntoView({block:'center'}));await new Promise(r=>setTimeout(r,180));}
               const d=await p.evaluate(()=>{
                 const food=[...document.querySelectorAll('.food')];
                 const bg=food.map(s=>{const el=s.querySelector('.photo,.bg');return el?getComputedStyle(el).backgroundImage:''});
@@ -55,9 +54,11 @@ jobs:
               if(d.canvases<5) failures.push(`${name}: flow canvas missing`);
               if(!d.links.some(x=>x.includes('google.com/maps'))) failures.push(`${name}: MAP missing`);
               if(!d.links.some(x=>x.startsWith('tel:'))) failures.push(`${name}: tel missing`);
-              if(name==='pc'){await p.mouse.move(150,300);await p.mouse.move(800,500,{steps:15});await p.mouse.click(800,500);}
+              if(name==='pc'){await p.mouse.move(180,320);await p.mouse.move(820,520,{steps:8});await p.mouse.click(820,520);}
               else await p.touchscreen.tap(195,400);
-              await new Promise(r=>setTimeout(r,600)); await p.screenshot({path:`qa/${name}-interaction.png`});
+              await new Promise(r=>setTimeout(r,250));
+              await p.screenshot({path:`qa/${name}-full.png`,fullPage:true});
+              await p.screenshot({path:`qa/${name}-interaction.png`});
             }catch(e){failures.push(`${name}: ${e.message}`);fs.writeFileSync(`qa/${name}-error.txt`,e.stack||String(e));}
             await p.close();
           }
