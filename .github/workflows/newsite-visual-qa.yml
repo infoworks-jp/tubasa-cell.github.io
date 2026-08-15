@@ -1,0 +1,57 @@
+name: Newsite Visual QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'newsite/**'
+      - '.github/workflows/newsite-visual-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait for GitHub Pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://infoworks-jp.github.io/tubasa-cell.github.io/newsite/'
+          for i in {1..24}; do
+            code=$(curl -L -s -o /tmp/page.html -w '%{http_code}' "$URL" || true)
+            if [ "$code" = '200' ] && grep -q '味一番つばさ' /tmp/page.html; then
+              echo "Page is live: $URL"
+              exit 0
+            fi
+            echo "attempt $i: HTTP $code"
+            sleep 5
+          done
+          echo 'newsite did not become available in time'
+          exit 1
+
+      - name: Capture PC and mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          BROWSER=$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)
+          echo "browser=$BROWSER"
+          URL='https://infoworks-jp.github.io/tubasa-cell.github.io/newsite/'
+          "$BROWSER" --headless --no-sandbox --disable-gpu --hide-scrollbars --run-all-compositor-stages-before-draw --virtual-time-budget=3500 --window-size=1440,1200 --screenshot=tsubasa-pc.png "$URL"
+          "$BROWSER" --headless --no-sandbox --disable-gpu --hide-scrollbars --run-all-compositor-stages-before-draw --virtual-time-budget=3500 --window-size=390,844 --screenshot=tsubasa-mobile.png "$URL"
+          test -s tsubasa-pc.png
+          test -s tsubasa-mobile.png
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: tsubasa-newsite-visual-qa
+          path: |
+            tsubasa-pc.png
+            tsubasa-mobile.png
+          if-no-files-found: error
