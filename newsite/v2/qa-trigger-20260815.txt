@@ -1,1 +1,1 @@
-Refresh visual QA after replacing Tsubasa sprite with actual menu photography. pass=6
+individual-real-images-pass=1
