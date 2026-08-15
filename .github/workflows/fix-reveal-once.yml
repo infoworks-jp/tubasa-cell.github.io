@@ -1,0 +1,29 @@
+name: Fix product reveal once
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fix-reveal-once.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch reliable scroll reveal
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tsubasa-top-preview.html')
+          s=p.read_text()
+          marker='data-reliable-reveal="1"'
+          if marker not in s:
+              patch='''<script data-reliable-reveal="1">(()=>{const els=[...document.querySelectorAll('.scene.food')];const show=e=>e.classList.add('active');const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting)show(x.target)}),{threshold:.18,rootMargin:'0px 0px -8% 0px'});els.forEach(e=>{io.observe(e);const r=e.getBoundingClientRect();if(r.top<innerHeight*.92&&r.bottom>0)show(e)});addEventListener('pageshow',()=>els.forEach(e=>{const r=e.getBoundingClientRect();if(r.top<innerHeight*.92&&r.bottom>0)show(e)}));})();</script>'''
+              s=s.replace('</body>',patch+'</body>')
+              p.write_text(s)
+          PY
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add tsubasa-top-preview.html
+          git diff --cached --quiet || git commit -m "Fix reliable product title reveal"
+          git push
