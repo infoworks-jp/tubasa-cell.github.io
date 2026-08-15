@@ -32,7 +32,9 @@ jobs:
           for(const [name,width,height] of [['pc',1440,1000],['mobile',390,844]]){
             const p=await browser.newPage(); await p.setViewport({width,height,deviceScaleFactor:1});
             try{
-              await p.goto(process.env.TARGET,{waitUntil:'networkidle2',timeout:90000});
+              const response=await p.goto(process.env.TARGET,{waitUntil:'domcontentloaded',timeout:45000});
+              if(!response || !response.ok()) throw new Error(`HTTP ${response?.status?.() ?? 'NO_RESPONSE'}`);
+              await new Promise(r=>setTimeout(r,5000));
               await p.screenshot({path:`qa/${name}-full.png`,fullPage:true});
               const sections=await p.$$('main.scene, section');
               for(let i=0;i<sections.length;i++){await sections[i].evaluate(el=>el.scrollIntoView({block:'center'}));await new Promise(r=>setTimeout(r,900));await p.screenshot({path:`qa/${name}-${i}.png`});}
