@@ -1,0 +1,24 @@
+name: Tsubasa New Site Preview
+on:
+  workflow_dispatch:
+  push:
+    branches: [tsubasa-new-zero]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify new site assets
+        run: |
+          test -f index.html
+          test -f assets/tsubasa-sprite.webp
+          grep -q "data-lang=\"en\"" index.html
+          grep -q "data-lang=\"ko\"" index.html
+          grep -q "data-lang=\"zh\"" index.html
+          grep -q "特製<br>辛味噌ラーメン" index.html
+          grep -q "¥1,200" index.html
+          echo "new site source verified"
