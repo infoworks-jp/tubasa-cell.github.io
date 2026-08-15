@@ -1,1 +1,1 @@
-Refresh visual QA after replacing Tsubasa sprite with actual menu photography.
+Refresh visual QA after replacing Tsubasa sprite with actual menu photography. pass=3
