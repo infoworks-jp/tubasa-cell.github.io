@@ -8,6 +8,7 @@ on:
       - 'assets/**'
       - 'manual/**'
       - 'docs/**'
+      - 'preview/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -41,6 +42,7 @@ jobs:
           if [ -d assets ]; then cp -R assets _site/assets; fi
           if [ -d manual ]; then cp -R manual _site/manual; fi
           if [ -d docs ]; then cp -R docs _site/docs; fi
+          if [ -d preview ]; then cp -R preview _site/preview; fi
           python - <<'PY'
           from pathlib import Path
           p=Path('_site/index.html')
@@ -64,6 +66,7 @@ jobs:
       - name: Verify source of truth
         run: |
           test -f _site/index.html
+          test -f _site/preview/index.html
           test -f _site/assets/july-source-of-truth.js
           grep -q './assets/july-source-of-truth.js' _site/index.html
           grep -q "sales:4917050" _site/assets/july-source-of-truth.js
@@ -72,7 +75,7 @@ jobs:
           grep -q "net:4995" _site/assets/july-source-of-truth.js
           grep -q "\['チャーハン',800,135,0,108000\]" _site/assets/july-source-of-truth.js
           python - <<'PY'
-          import re,ast
+          import re
           s=open('_site/assets/july-source-of-truth.js',encoding='utf-8').read()
           rows=re.findall(r"\['([^']+)',(\d+),(\d+),(-?\d+),(\d+)\]",s)
           assert len(rows)==40, len(rows)
