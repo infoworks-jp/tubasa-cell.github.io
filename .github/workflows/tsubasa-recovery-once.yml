@@ -1,0 +1,71 @@
+name: Tsubasa controlled recovery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/tsubasa-recovery-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Apply only approved recovery changes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('tsubasa-top-preview.html')
+          s=p.read_text()
+
+          # 1) Keep the recovered cinematic layout and processed dish assets.
+          # Fix only the first ramen title: the signature chashu remains the '究極の味噌'.
+          s=s.replace('<h2>究極の味噌</h2><p>街の夜から、一杯の湯気へ。</p>',
+                      '<h2>味噌ラーメン</h2><p>街の夜から、一杯の湯気へ。</p>',1)
+
+          # 2) Use the newer high-resolution store attachment, without changing store composition/text.
+          s=s.replace("4d13fe_6030605606614d78a58756c9fad346a6~mv2.jpg",
+                      "4d13fe_5878bee977d84432bbdcbdf093f59044~mv2.jpg")
+
+          # 3) Foreign-language menus: links only, no menu images in the page.
+          foreign='''<section class="foreign foreign-links-only"><div class="foreign-head"><div><div class="eyebrow">FOREIGN LANGUAGE MENU</div><h2>外国語メニュー</h2></div><p>必要な言語をクリックするとメニューが開きます。</p></div><div class="language-links"><a href="https://www.tubasa-susukino.com/%E5%A4%96%E5%9B%BD%E8%AA%9E%E3%83%A1%E3%83%8B%E3%83%A5%E3%83%BC" target="_blank" rel="noopener">ENGLISH ↗</a><a href="https://www.tubasa-susukino.com/%E5%A4%96%E5%9B%BD%E8%AA%9E%E3%83%A1%E3%83%8B%E3%83%A5%E3%83%BC" target="_blank" rel="noopener">中文 ↗</a><a href="https://www.tubasa-susukino.com/%E5%A4%96%E5%9B%BD%E8%AA%9E%E3%83%A1%E3%83%8B%E3%83%A5%E3%83%BC" target="_blank" rel="noopener">한국어 ↗</a></div></section><section class="info">'''
+          s,n=re.subn(r'<section class="foreign">.*?</section><section class="info">',foreign,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit('foreign section marker not found')
+
+          # 4) Make address and telephone actual links without changing displayed information.
+          s=s.replace('target="_blank">札幌市中央区南4条西3丁目1-1 新ラーメン横丁',
+                      'target="_blank" rel="noopener">札幌市中央区南4条西3丁目1-1 新ラーメン横丁')
+          s=s.replace('<dd>011-521-5963</dd>','<dd><a class="map" href="tel:0115215963">011-521-5963</a></dd>')
+
+          # 5) Restore visible, repeatable text reveal for every product scene.
+          # Existing .copy animation stays; this observer guarantees activation and re-activation.
+          reveal='''<script id="recovery-reveal">(()=>{const scenes=[...document.querySelectorAll('.scene')];const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.remove('active');requestAnimationFrame(()=>requestAnimationFrame(()=>e.target.classList.add('active')))}else e.target.classList.remove('active')}),{threshold:.28});scenes.forEach(s=>io.observe(s));})();</script>'''
+
+          # 6) Add pointer/touch ink flow as a separate non-blocking overlay; do not disturb links/content.
+          pointer='''<style id="pointer-flow-style">#pointerFlow{position:fixed;inset:0;width:100vw;height:100vh;z-index:6;pointer-events:none;mix-blend-mode:screen}.foreign-links-only{padding:9vh 6vw;background:#090706;color:#f3ede7}.language-links{display:flex;gap:38px;flex-wrap:wrap;border-top:1px solid #302823;padding-top:26px}.language-links a{color:#fff;text-decoration:none;font:12px sans-serif;letter-spacing:.2em;border-bottom:1px solid #8e1712;padding:8px 0}@media(max-width:800px){.language-links{gap:22px}.foreign-links-only{padding:8vh 6vw}}</style><canvas id="pointerFlow" aria-hidden="true"></canvas><script id="pointer-flow-script">(()=>{const c=document.getElementById('pointerFlow'),x=c.getContext('2d');let w=0,h=0,d=1,ps=[];const resize=()=>{d=Math.min(devicePixelRatio||1,2);w=innerWidth;h=innerHeight;c.width=w*d;c.height=h*d;c.style.width=w+'px';c.style.height=h+'px';x.setTransform(d,0,0,d,0,0)};resize();addEventListener('resize',resize,{passive:true});function burst(px,py,n=9,power=1){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=(.15+Math.random()*.55)*power;ps.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-.18,r:18+Math.random()*52,a:.055+Math.random()*.075,t:0,m:70+Math.random()*95})}}addEventListener('pointermove',e=>burst(e.clientX,e.clientY,2,.7),{passive:true});addEventListener('pointerdown',e=>burst(e.clientX,e.clientY,24,2.2),{passive:true});function loop(){x.clearRect(0,0,w,h);x.globalCompositeOperation='screen';for(let i=ps.length-1;i>=0;i--){let q=ps[i];q.t++;q.x+=q.vx;q.y+=q.vy;q.vx*=.992;q.vy-=.002;q.r+=.55;let k=1-q.t/q.m;if(k<=0){ps.splice(i,1);continue}let g=x.createRadialGradient(q.x,q.y,0,q.x,q.y,q.r);g.addColorStop(0,'rgba(255,246,238,'+(q.a*k)+')');g.addColorStop(.45,'rgba(210,25,18,'+(q.a*k*.6)+')');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.beginPath();x.ellipse(q.x,q.y,q.r*.75,q.r*1.45,Math.sin(q.t*.025)*.45,0,Math.PI*2);x.fill()}requestAnimationFrame(loop)}loop()})();</script>'''
+
+          s=s.replace('</body>',pointer+reveal+'</body>')
+          p.write_text(s)
+          PY
+          git diff --check
+          grep -q '味噌ラーメン' tsubasa-top-preview.html
+          grep -q '4d13fe_25b83783970542929332603b0c6d31ae' tsubasa-top-preview.html
+          grep -q '4d13fe_aaab3ac88bbf4dbb98e8700d0f4860f4' tsubasa-top-preview.html
+          grep -q '4d13fe_5878bee977d84432bbdcbdf093f59044' tsubasa-top-preview.html
+          grep -q 'pointerFlow' tsubasa-top-preview.html
+          grep -q 'language-links' tsubasa-top-preview.html
+      - name: Commit recovered preview
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tsubasa-top-preview.html
+          git commit -m 'Recover approved Tsubasa base and apply only requested fixes'
+          git push origin HEAD:main
