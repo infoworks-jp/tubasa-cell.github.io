@@ -13,6 +13,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,15 +40,19 @@ jobs:
           set -euo pipefail
           grep -q 'url=./manual/' manual.html
 
-      - name: Install Chromium
+      - name: Install Chromium and Puppeteer
         shell: bash
         run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium
+          npm init -y >/dev/null 2>&1
+          npm install --no-save puppeteer-core@24 >/dev/null
 
       - name: Start local preview
         shell: bash
         run: |
+          set -euo pipefail
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/tsubasa-http.log 2>&1 &
           echo $! > /tmp/tsubasa-http.pid
           for i in {1..20}; do
@@ -57,13 +62,33 @@ jobs:
           cat /tmp/tsubasa-http.log
           exit 1
 
-      - name: Capture desktop and mobile screenshots
+      - name: Capture full-page desktop and mobile screenshots
         shell: bash
+        timeout-minutes: 3
         run: |
           set -euo pipefail
           CHROME=$(command -v chromium-browser || command -v chromium)
-          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --virtual-time-budget=5000 --window-size=1440,1000 --screenshot=tsubasa-desktop.png http://127.0.0.1:4173/tsubasa-top-preview.html
-          "$CHROME" --headless --no-sandbox --disable-gpu --hide-scrollbars --virtual-time-budget=5000 --window-size=390,844 --screenshot=tsubasa-mobile.png http://127.0.0.1:4173/tsubasa-top-preview.html
+          export CHROME
+          cat > /tmp/capture.mjs <<'EOF'
+          import puppeteer from 'puppeteer-core';
+          const browser = await puppeteer.launch({headless:true, executablePath:process.env.CHROME, args:['--no-sandbox','--disable-dev-shm-usage']});
+          async function shot(name,width,height,mobile=false){
+            const page=await browser.newPage();
+            await page.setViewport({width,height,deviceScaleFactor:1,isMobile:mobile,hasTouch:mobile});
+            await page.goto('http://127.0.0.1:4173/tsubasa-top-preview.html',{waitUntil:'domcontentloaded',timeout:30000});
+            await page.evaluate(async()=>{
+              const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+              for(let y=0;y<document.body.scrollHeight;y+=Math.max(400,innerHeight*.7)){scrollTo(0,y);await sleep(120)}
+              scrollTo(0,0); await sleep(800);
+            });
+            await page.screenshot({path:name,fullPage:true,captureBeyondViewport:true});
+            await page.close();
+          }
+          await shot('tsubasa-desktop.png',1440,1000,false);
+          await shot('tsubasa-mobile.png',390,844,true);
+          await browser.close();
+          EOF
+          node /tmp/capture.mjs
           test -s tsubasa-desktop.png
           test -s tsubasa-mobile.png
 
@@ -81,11 +106,8 @@ jobs:
         run: |
           {
             echo '## GitHub Pages integrity'
-            echo '- index.html: OK'
-            echo '- manual/index.html: OK'
-            echo '- manual.html fallback: OK'
             echo '- tsubasa-top-preview.html: OK'
-            echo '- desktop screenshot: captured'
-            echo '- mobile screenshot: captured'
-            echo '- .nojekyll: OK'
+            echo '- desktop full-page screenshot: captured'
+            echo '- mobile full-page screenshot: captured'
+            echo '- visual QA artifact: uploaded'
           } >> "$GITHUB_STEP_SUMMARY"
